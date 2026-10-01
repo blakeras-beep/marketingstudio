@@ -84,8 +84,10 @@ Settings (environment variables): `BDX_FEED_URL`, `BDX_CACHE_TTL` (default 900 s
 `BDX_TIMEOUT` (20 s), `DISCLAIMER` (footer text), `SIGNATURE_COMMUNITIES`
 (comma-separated community names).
 
-Deploys anywhere that runs a Python web process (`Procfile` included for
-Railway/Heroku-style hosts).
+Deploys anywhere that runs a Python web process. Railway: `railway.json` sets
+the start command and a `/livez` health check (independent of the feed, so a
+BDX outage can't block a deploy; `/healthz` reports feed and image-store state).
+`Procfile` covers Heroku-style hosts.
 
 ## Photos
 

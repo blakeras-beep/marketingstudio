@@ -70,6 +70,13 @@ def image(u: str, w: int, h: int | None = None, la: int = 0):
                     headers={"Cache-Control": "public, max-age=604800"})
 
 
+@app.get("/livez")
+def livez():
+    """Process is up. Deploy health check; deliberately independent of the feed,
+    so a BDX outage can't block a deploy (/healthz reports feed state)."""
+    return {"ok": True}
+
+
 @app.get("/healthz")
 def healthz():
     st = bdx.state()
