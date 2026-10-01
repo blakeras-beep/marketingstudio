@@ -1,6 +1,7 @@
 """Display formatting. Every helper prints an em dash for a missing value."""
 from __future__ import annotations
 
+import re
 from datetime import date
 
 DASH = "—"
@@ -77,7 +78,13 @@ def sqft_range(r) -> str:
     return f"{lo:,} Sq. Ft." if lo == hi else f"{lo:,} – {hi:,} Sq. Ft."
 
 
+def status(s) -> str:
+    """BDX status 'GrandOpening' -> 'Grand Opening'."""
+    return re.sub(r"(?<=[a-z])(?=[A-Z])", " ", s) if s else DASH
+
+
 FILTERS = {
+    "status": status,
     "money": money,
     "num": num,
     "sqft": sqft,

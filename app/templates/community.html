@@ -3,7 +3,7 @@
 {% block main %}
 <a href="/" style="font-size:12px;color:var(--ink-subtle)">&larr; All communities</a>
 <h1 style="margin-top:8px">{{ c.name }}</h1>
-<p class="sub">{{ city_line(c.city, c.state, c.zip) }}{% if c.status %} &middot; <span class="chip">{{ c.status }}</span>{% endif %}{% if c.tier == "signature" %} <span class="chip sig">Signature</span>{% endif %}</p>
+<p class="sub">{{ city_line(c.city, c.state, c.zip) }}{% if c.status %} &middot; <span class="chip">{{ c.status | status }}</span>{% endif %}{% if c.tier == "signature" %} <span class="chip sig">Signature</span>{% endif %}</p>
 
 <h2>Community Flyers</h2>
 <div class="grid">

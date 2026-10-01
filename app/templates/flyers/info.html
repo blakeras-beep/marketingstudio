@@ -49,7 +49,7 @@
       <div class="card warm">
         <h3>Visit Our Sales Office</h3>
         <div class="kv">
-          <div class="k">Address</div><div>{{ c.street | text }}<br>{{ city_line(c.city, c.state, c.zip) }}</div>
+          <div class="k">Address</div><div>{{ (ct.street or c.street) | text }}<br>{{ city_line(ct.city or c.city, ct.state or c.state, ct.zip or c.zip) }}</div>
           <div class="k">Contact</div><div>{{ ct.agents | join(', ') if ct.agents else DASH }}</div>
           <div class="k">Phone</div><div>{{ ct.phone | text }}</div>
           <div class="k">Email</div><div style="word-break:break-all">{{ ct.email | text }}</div>

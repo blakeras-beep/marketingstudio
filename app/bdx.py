@@ -71,6 +71,10 @@ class Contact:
     phone: str | None = None
     email: str | None = None
     hours: str | None = None
+    street: str | None = None  # SalesOffice/Address
+    city: str | None = None
+    state: str | None = None
+    zip: str | None = None
 
 
 @dataclass
@@ -99,6 +103,8 @@ class Community:
     plans: list[Plan]
     homes: list[Home]
     brand: str | None = None  # BDX <Builder><BrandName>
+    number: str | None = None  # BDX SubdivisionNumber
+    lot_map: str | None = None  # SubImage Type="LotMap"
 
     @property
     def tier(self) -> str:
@@ -147,7 +153,8 @@ class Community:
 # ---------------------------------------------------------------- helpers
 
 def slugify(s: str) -> str:
-    s = re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")
+    s = re.sub(r"['’]", "", s.lower())  # Settler's Glen -> settlers-glen
+    s = re.sub(r"[^a-z0-9]+", "-", s).strip("-")
     return s or "x"
 
 
@@ -187,6 +194,27 @@ def _t(el, *names) -> str | None:
     return _txt(_kid(el, *names))
 
 
+def _para(el, *names) -> str | None:
+    """Like _t but keeps paragraph breaks (one per line) for long copy."""
+    k = _kid(el, *names)
+    if k is None:
+        return None
+    lines = [" ".join(ln.split()) for ln in "".join(k.itertext()).splitlines()]
+    return "\n".join(ln for ln in lines if ln) or None
+
+
+def _all(el, *names) -> str | None:
+    """Every matching child's text, joined — e.g. two <Middle> schools."""
+    if el is None:
+        return None
+    vals = []
+    for c in _kids(el, *names):
+        t = _txt(c)
+        if t and t not in vals:
+            vals.append(t)
+    return ", ".join(vals) or None
+
+
 def _attr(el, *names) -> str | None:
     if el is None:
         return None
@@ -221,18 +249,24 @@ def _int(s: str | None) -> int | None:
     return int(round(v)) if v else None
 
 
-def _images(el, *names) -> list[str]:
-    """Image URLs from matching children, ordered by SequencePosition when present."""
+def _images(el, *names, keep=lambda c: True) -> list[str]:
+    """Image URLs from matching children, ordered by SequencePosition when present.
+
+    An image flagged IsPreferredSubImage="1" sorts first (it's the feed's hero).
+    """
     if el is None:
         return []
     found = []
     for i, c in enumerate(_kids(el, *names)):
+        if not keep(c):
+            continue
         url = _txt(c) or _attr(c, "url", "src", "href")
         if url and re.match(r"https?://", url):
             seq = _num(_attr(c, "SequencePosition", "Sequence", "Position"))
-            found.append((seq if seq is not None else 1e9, i, url))
+            pref = 0 if _attr(c, "IsPreferredSubImage") == "1" else 1
+            found.append((pref, seq if seq is not None else 1e9, i, url))
     out = []
-    for _, _, url in sorted(found):
+    for *_, url in sorted(found):
         if url not in out:
             out.append(url)
     return out
@@ -292,7 +326,7 @@ def _parse_plan(el) -> Plan:
         half_baths=_pos(_t(el, "HalfBaths")),
         garage=_pos(_t(el, "Garage")),
         stories=_pos(_t(el, "Stories")),
-        description=_t(el, "Description", "PlanDescription"),
+        description=_para(el, "Description", "PlanDescription"),
         elevation=elev[0] if elev else None,
         floorplans=_images(src, "FloorPlanImage"),
         photos=elev + _images(src, "InteriorImage"),
@@ -341,7 +375,7 @@ def _parse_spec(el, plan: Plan | None, used: set[str]) -> Home:
         garage=_pos(_t(el, "SpecGarage", "Garage")),
         stories=_pos(_t(el, "SpecStories", "Stories")),
         move_in=_date(_kid(el, "SpecMoveInDate", "MoveInDate")),
-        description=_t(el, "SpecDescription", "Description"),
+        description=_para(el, "SpecDescription", "Description"),
         hero=elev[0] if elev else (interior[0] if interior else None),
         floorplans=floors,
         photos=elev + interior,
@@ -363,7 +397,7 @@ def _parse_schools(sub) -> Schools:
         "high": ("High", "HighSchool", "SeniorHigh"),
     }
     for key, names in levels.items():
-        setattr(out, key, _t(el, *names))
+        setattr(out, key, _all(el, *names))
     # <School Type="Elementary"><SchoolName>…</SchoolName></School> form, anywhere below.
     for s in el.iter():
         if _local(s.tag) != "school":
@@ -388,6 +422,10 @@ def _parse_contact(sub) -> Contact:
     c.phone = _phone(_kid(so, "Phone"))
     c.email = _t(so, "Email")
     c.hours = _t(so, "Hours")
+    addr = _kid(so, "Address")
+    if addr is not None:
+        c.street = _t(addr, "Street1")
+        c.city, c.state, c.zip = _t(addr, "City"), _t(addr, "State"), _t(addr, "ZIP", "Zip")
     return c
 
 
@@ -405,7 +443,10 @@ def _parse_subdivision(sub, brand: str | None = None) -> Community | None:
     used: set[str] = set()
     for pel in _kids(sub, "Plan"):
         plan = _parse_plan(pel)
-        plans.append(plan)
+        # <PlanNotAvailable>1</PlanNotAvailable>: no longer offered. Its specs
+        # are still real inventory, but the plan isn't marketed.
+        if _t(pel, "PlanNotAvailable") != "1":
+            plans.append(plan)
         mine = [_parse_spec(s, plan, used) for s in _kids(pel, "Spec")]
         homes += mine
         plan.homes_available = len(mine)
@@ -414,23 +455,30 @@ def _parse_subdivision(sub, brand: str | None = None) -> Community | None:
     # Specs that sit directly under the Subdivision have no parent plan.
     homes += [_parse_spec(s, None, used) for s in _kids(sub, "Spec")]
 
+    contact = _parse_contact(sub)
+    is_map = lambda c: (_attr(c, "Type") or "").lower() == "lotmap"
+    maps = _images(sub, "SubImage", keep=is_map)
+    # Sandlin's feed has no SubAddress; the in-community sales office address
+    # is the community's address.
     return Community(
         name=name,
         slug=slugify(name),
         status=_attr(sub, "Status") or _t(sub, "Status"),
-        street=a("SubStreet1", "Street1"),
-        city=a("SubCity", "City"),
-        state=a("SubState", "State"),
-        zip=a("SubZIP", "SubZip", "ZIP"),
-        description=_t(sub, "SubDescription", "Description"),
-        driving_directions=_t(sub, "DrivingDirections"),
+        street=a("SubStreet1", "Street1") or contact.street,
+        city=a("SubCity", "City") or contact.city,
+        state=a("SubState", "State") or contact.state,
+        zip=a("SubZIP", "SubZip", "ZIP") or contact.zip,
+        description=_para(sub, "SubDescription", "Description"),
+        driving_directions=_para(sub, "DrivingDirections"),
         website=_t(sub, "SubWebsite", "Website"),
-        photos=_images(sub, "SubImage"),
+        photos=_images(sub, "SubImage", keep=lambda c: not is_map(c)),
         schools=_parse_schools(sub),
-        contact=_parse_contact(sub),
+        contact=contact,
         plans=plans,
         homes=homes,
         brand=brand,
+        number=_t(sub, "SubdivisionNumber"),
+        lot_map=maps[0] if maps else None,
     )
 
 
@@ -441,12 +489,21 @@ def parse(xml_bytes: bytes) -> list[Community]:
     for b in builders:
         brand = _t(b, "BrandName") if b is not root else None
         subs += [(s, brand) for s in b.iter() if _local(s.tag) == "subdivision"]
-    out: list[Community] = []
-    seen: set[str] = set()
+    # The same subdivision can be listed under more than one Builder (Sandlin's
+    # feed repeats three under "New Global"). Keep one, preferring the Sandlin brand.
+    unique: dict[str, Community] = {}
     for el, brand in subs:
         c = _parse_subdivision(el, brand)
         if not c:
             continue
+        key = c.number or c.name
+        prev = unique.get(key)
+        if prev is None or ("sandlin" in (c.brand or "").lower()
+                            and "sandlin" not in (prev.brand or "").lower()):
+            unique[key] = c
+    out: list[Community] = []
+    seen: set[str] = set()
+    for c in unique.values():
         slug, n = c.slug, 2
         while slug in seen:
             slug, n = f"{c.slug}-{n}", n + 1
