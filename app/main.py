@@ -5,11 +5,11 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from . import bdx, config, fmt, images
+from . import bdx, config, fmt, images, store
 from .flyers import (
     COMMUNITY_FLYERS, FLYERS_BY_KEY, HOME_FLYER, GRID_CARDS, PLAN_ROWS, PRICING_ROWS,
     paginate, sorted_homes, sorted_plans,
@@ -53,12 +53,21 @@ def image(u: str, w: int, h: int | None = None, la: int = 0):
     """Feed photo downsampled to print size (see app/images.py)."""
     if not images.allowed(u) or not (16 <= w <= 4000) or (h is not None and not 16 <= h <= 4000):
         raise HTTPException(400, "Image not allowed")
+    st, key = store.get_store(), images.cache_key(u, w, h, bool(la))
+    public = st.public_url(key)
     try:
-        path = images.render(u, w, h, bool(la))
-    except Exception as e:  # unreachable/corrupt source: the page shows placeholder art
+        if public and st.exists(key):
+            return RedirectResponse(public, status_code=302)
+        data = None if public else st.get(key)
+        if data is None:
+            data = images.render(u, w, h, bool(la))
+            st.put(key, data)
+            if public:
+                return RedirectResponse(public, status_code=302)
+    except Exception as e:  # unreachable/corrupt source or store: placeholder art shows
         raise HTTPException(502, f"Image unavailable: {type(e).__name__}")
-    return FileResponse(path, media_type="image/jpeg",
-                        headers={"Cache-Control": "public, max-age=604800"})
+    return Response(data, media_type="image/jpeg",
+                    headers={"Cache-Control": "public, max-age=604800"})
 
 
 @app.get("/healthz")
@@ -66,7 +75,7 @@ def healthz():
     st = bdx.state()
     ok = bool(st.communities)
     return JSONResponse(
-        {"ok": ok, "communities": len(st.communities),
+        {"ok": ok, "communities": len(st.communities), "image_store": store.get_store().name,
          "fetched_at": st.fetched_at.isoformat() if st.fetched_at else None,
          "error": st.error},
         status_code=200 if ok else 503,

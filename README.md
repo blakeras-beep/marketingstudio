@@ -76,7 +76,8 @@ JSON for debugging or for other tools: `GET /api/communities`,
 ```bash
 pip install -r requirements.txt
 uvicorn app.main:app --reload            # http://localhost:8000
-python -m unittest                       # parser/format tests
+pip install -r requirements-dev.txt
+python -m unittest                       # parser, format, image and R2 tests (R2 is stubbed)
 ```
 
 Settings (environment variables): `BDX_FEED_URL`, `BDX_CACHE_TTL` (default 900 s),
@@ -91,16 +92,25 @@ Railway/Heroku-style hosts).
 Feed photos are often photographer originals (up to ~6000 px and 9–12 MB),
 which the browser would embed untouched, making a two-page flyer up to 30 MB.
 `/img` (`app/images.py`, Pillow) fetches each photo once, downsamples it to the
-size it prints at (200 dpi for photos, 300 dpi for floor plans), keeps its color
-profile, and caches it on disk. A JPEG already at or under print size is served
-byte-for-byte. Only the feed's hosts are fetched (S3 `buildercloud`,
-`www.sandlinhomes.com`).
+size it prints at (200 dpi for photos, 300 dpi for floor plans) and keeps its
+color profile. A JPEG already at or under print size is served byte-for-byte.
+Only the feed's hosts are fetched (S3 `buildercloud`, `www.sandlinhomes.com`).
+
+Resized photos are stored in **Cloudflare R2** (`app/store.py`), never on local
+disk. They're a cache: deleting them only means each photo is resized again the
+next time a flyer needs it. Without R2 settings (local dev) the app keeps them
+in a byte-capped in-memory cache instead. `/healthz` reports which is active.
 
 Measured on the live feed: single-home flyers median 572 KB (max 1.1 MB),
 grid flyers median 645 KB (max 1.2 MB), info sheets ~500 KB.
 
-Settings: `IMAGE_DPI` (default 200), `IMAGE_CACHE_DIR` (default
-`/tmp/marketingstudio-img`; safe to delete, it refills on demand).
+| Setting | |
+|---|---|
+| `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | all four enable R2 (an API token with Object Read & Write on the bucket) |
+| `R2_PREFIX` | key prefix, default `marketing-studio/img/` |
+| `R2_PUBLIC_URL` | optional custom domain or r2.dev URL for the bucket; when set, `/img` redirects there and R2 serves the bytes, otherwise the app streams them |
+| `IMAGE_DPI` | photo print resolution, default 200 |
+| `IMAGE_MEMORY_MB` | in-memory cache cap when R2 isn't configured, default 256 |
 
 ## Print-readiness contract
 
