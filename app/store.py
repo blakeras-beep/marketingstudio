@@ -5,18 +5,34 @@ only means each photo is resized again the next time a flyer asks for it.
 """
 from __future__ import annotations
 
+import logging
 import os
+import re
 import threading
 from collections import OrderedDict
 
-R2_ACCOUNT_ID = os.environ.get("R2_ACCOUNT_ID", "")
-R2_ACCESS_KEY_ID = os.environ.get("R2_ACCESS_KEY_ID", "")
-R2_SECRET_ACCESS_KEY = os.environ.get("R2_SECRET_ACCESS_KEY", "")
-R2_BUCKET = os.environ.get("R2_BUCKET", "")
-R2_PREFIX = os.environ.get("R2_PREFIX", "marketing-studio/img/")
+log = logging.getLogger("marketingstudio")
+
+
+def _env(name: str, default: str = "") -> str:
+    # Pasted values often carry stray whitespace, newlines or quotes.
+    return os.environ.get(name, default).strip().strip("'\"").strip()
+
+
+def account_id(raw: str) -> str:
+    """Accept the bare account ID or the S3 endpoint URL Cloudflare shows beside it."""
+    m = re.search(r"([0-9a-f]{32})", raw.lower())
+    return m.group(1) if m else raw
+
+
+R2_ACCOUNT_ID = account_id(_env("R2_ACCOUNT_ID"))
+R2_ACCESS_KEY_ID = _env("R2_ACCESS_KEY_ID")
+R2_SECRET_ACCESS_KEY = _env("R2_SECRET_ACCESS_KEY")
+R2_BUCKET = _env("R2_BUCKET")
+R2_PREFIX = _env("R2_PREFIX", "marketing-studio/img/")
 # Optional public base URL for the bucket (custom domain or r2.dev). When set,
 # /img redirects there and R2 serves the bytes; otherwise the app streams them.
-R2_PUBLIC_URL = os.environ.get("R2_PUBLIC_URL", "").rstrip("/")
+R2_PUBLIC_URL = _env("R2_PUBLIC_URL").rstrip("/")
 MEMORY_MB = int(os.environ.get("IMAGE_MEMORY_MB", "256"))
 
 
@@ -112,11 +128,20 @@ def r2_configured() -> bool:
 
 _store = None
 _lock = threading.Lock()
+setup_error: str | None = None  # why R2 couldn't be set up, shown on /healthz/images
 
 
 def get_store():
-    global _store
+    """R2 when configured; otherwise, or if R2 setup fails, the memory cache."""
+    global _store, setup_error
     with _lock:
         if _store is None:
-            _store = R2Store() if r2_configured() else MemoryStore(MEMORY_MB * 1024 * 1024)
+            if r2_configured():
+                try:
+                    _store = R2Store()
+                except Exception as e:
+                    setup_error = f"{type(e).__name__}: {e}"
+                    log.exception("R2 setup failed; using in-memory image cache")
+            if _store is None:
+                _store = MemoryStore(MEMORY_MB * 1024 * 1024)
         return _store

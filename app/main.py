@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import re
 
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -92,7 +93,19 @@ def healthz_images():
     Reports the exact error at each step so a misconfigured R2 setting is obvious.
     """
     out: dict = {"store": store.get_store().name, "r2_configured": store.r2_configured(),
+                 "r2_setup_error": store.setup_error,
+                 "r2_account_id": (store.R2_ACCOUNT_ID[:4] + "…") if store.R2_ACCOUNT_ID else None,
+                 "r2_account_id_looks_valid": bool(re.fullmatch(r"[0-9a-f]{32}", store.R2_ACCOUNT_ID)),
                  "r2_bucket": store.R2_BUCKET or None, "r2_public_url": store.R2_PUBLIC_URL or None}
+    try:
+        return _check_images(out)
+    except Exception as e:  # the diagnostic itself must never 500
+        log.exception("image diagnostic failed")
+        out["error"] = f"{type(e).__name__}: {e}"
+        return JSONResponse(out, status_code=503)
+
+
+def _check_images(out: dict) -> JSONResponse:
     cs = bdx.state().communities
     url = next((x for c in cs for x in [c.hero] if x and images.allowed(x)), None)
     out["sample"] = url

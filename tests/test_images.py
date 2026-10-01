@@ -145,5 +145,24 @@ class R2Test(unittest.TestCase):
         self.assertEqual(cfg.response_checksum_validation, "when_required")
 
 
+class SetupTest(unittest.TestCase):
+    def test_account_id_accepts_endpoint_url_and_whitespace(self):
+        aid = "0123456789abcdef0123456789abcdef"
+        self.assertEqual(store.account_id(aid), aid)
+        self.assertEqual(store.account_id(f" https://{aid}.r2.cloudflarestorage.com\n"), aid)
+
+    def test_setup_failure_falls_back_to_memory(self):
+        with mock.patch.object(store, "_store", None), \
+                mock.patch.object(store, "r2_configured", return_value=True), \
+                mock.patch.object(store, "R2Store", side_effect=ValueError("Invalid endpoint")), \
+                self.assertLogs("marketingstudio", "ERROR"):
+            s = store.get_store()
+            self.assertEqual(s.name, "memory")
+            self.assertIn("Invalid endpoint", store.setup_error)
+            r = TestClient(main.app).get("/healthz/images")
+        self.assertIn(r.status_code, (200, 503))  # never a bare 500
+        self.assertIn("Invalid endpoint", r.json()["r2_setup_error"])
+
+
 if __name__ == "__main__":
     unittest.main()
