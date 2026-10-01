@@ -11,7 +11,7 @@
     <div class="ph" style="{% if c.hero %}background-image:url('{{ c.hero }}'){% endif %}"></div>
     <div class="bd">
       <div class="n">{{ c.name }}</div>
-      <div class="m">{{ city_line(c.city, c.state) }}{% if c.status %} &middot; <span class="chip">{{ c.status }}</span>{% endif %}</div>
+      <div class="m">{{ city_line(c.city, c.state) }}{% if c.status %} &middot; <span class="chip">{{ c.status }}</span>{% endif %}{% if c.tier == "signature" %} <span class="chip sig">Signature</span>{% endif %}</div>
       <div class="facts">
         <span>From {{ c.price_from | money }}</span>
         <span>{{ c.homes | length }} home{{ '' if c.homes|length == 1 else 's' }}</span>

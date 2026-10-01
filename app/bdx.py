@@ -98,6 +98,15 @@ class Community:
     contact: Contact
     plans: list[Plan]
     homes: list[Home]
+    brand: str | None = None  # BDX <Builder><BrandName>
+
+    @property
+    def tier(self) -> str:
+        """'signature' (gold arch, navy + champagne only) or 'homes'."""
+        if self.brand and "signature" in self.brand.lower():
+            return "signature"
+        keys = {name_key(n) for n in config.SIGNATURE_COMMUNITIES}
+        return "signature" if name_key(self.name) in keys else "homes"
 
     # Derived facts — computed from feed values only.
     @property
@@ -131,6 +140,7 @@ class Community:
         d["price_from"] = self.price_from
         d["sqft_range"] = self.sqft_range
         d["hero"] = self.hero
+        d["tier"] = self.tier
         return d
 
 
@@ -381,7 +391,7 @@ def _parse_contact(sub) -> Contact:
     return c
 
 
-def _parse_subdivision(sub) -> Community | None:
+def _parse_subdivision(sub, brand: str | None = None) -> Community | None:
     name = _t(sub, "SubdivisionName")
     if not name:
         return None
@@ -420,17 +430,21 @@ def _parse_subdivision(sub) -> Community | None:
         contact=_parse_contact(sub),
         plans=plans,
         homes=homes,
+        brand=brand,
     )
 
 
 def parse(xml_bytes: bytes) -> list[Community]:
     root = ET.fromstring(xml_bytes)
+    builders = [b for b in root.iter() if _local(b.tag) == "builder"] or [root]
+    subs = []
+    for b in builders:
+        brand = _t(b, "BrandName") if b is not root else None
+        subs += [(s, brand) for s in b.iter() if _local(s.tag) == "subdivision"]
     out: list[Community] = []
     seen: set[str] = set()
-    for el in root.iter():
-        if _local(el.tag) != "subdivision":
-            continue
-        c = _parse_subdivision(el)
+    for el, brand in subs:
+        c = _parse_subdivision(el, brand)
         if not c:
             continue
         slug, n = c.slug, 2

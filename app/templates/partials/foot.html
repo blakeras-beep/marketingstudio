@@ -1,6 +1,7 @@
+{% from "partials/logo.html" import logo %}
 {# Footer on every sheet: logo, disclaimer, contact, effective date, EHO mark (legally required). #}
 <div class="foot">
-  <img class="logo" src="/static/logo-navy.png" alt="Sandlin Homes">
+  {{ logo(c, "white", 22) }}
   <div>
     <div class="contact">
       {%- set ct = c.contact -%}

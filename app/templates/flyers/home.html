@@ -1,5 +1,6 @@
 {% extends "flyers/_base.html" %}
 {% block pages %}
+{% from "partials/logo.html" import logo %}
 {% set page_count = 2 %}{% set mi = h.move_in | move_in(today) %}
 {# ---- page 1: photo + facts ---- #}
 {% set page_no = 1 %}
@@ -7,7 +8,7 @@
   <div class="homehero">
     <img class="photo" src="{{ h.hero or '/static/placeholder.svg' }}" alt="">
     {% if mi == READY %}<div class="flag">{{ READY }}</div>{% endif %}
-    <div class="logo-chip"><img src="/static/logo-white.png" alt="Sandlin Homes"></div>
+    <div class="logo-chip">{{ logo(c, "white", 26) }}</div>
   </div>
   <div class="addrband on-navy">
     <div>
@@ -55,7 +56,7 @@
 <section class="sheet">
   <div class="band slim on-navy">
     <h2>{{ plan_label(h.plan) if h.plan else 'Floor Plan' }} &middot; {{ h.address or h.id }}</h2>
-    <img class="logo" src="/static/logo-white.png" alt="Sandlin Homes" style="height:22px">
+    {{ logo(c, "navy", 22) }}
   </div>
   {% set fps = h.floorplans[:2] %}
   <div class="fp {{ 'two' if fps|length > 1 }}">

@@ -1,0 +1,11 @@
+{# Tier-correct logo. Sandlin Homes: silver arch (white version on navy).
+   Sandlin Signature: gold arch; there is no reversed Signature file, so on navy
+   it sits on a white plate rather than being recolored. Never mix the two. #}
+{% macro logo(c, on="white", h=30, cls="logo") -%}
+{%- if c.tier == "signature" -%}
+  {%- if on == "navy" -%}<span class="logo-plate"><img class="{{ cls }}" style="height:{{ h }}px" src="/static/logo-signature.png" alt="Sandlin Signature"></span>
+  {%- else -%}<img class="{{ cls }}" style="height:{{ h }}px" src="/static/logo-signature.png" alt="Sandlin Signature">{%- endif -%}
+{%- else -%}
+  <img class="{{ cls }}" style="height:{{ h }}px" src="/static/logo-{{ 'white' if on == 'navy' else 'navy' }}.png" alt="Sandlin Homes">
+{%- endif -%}
+{%- endmacro %}

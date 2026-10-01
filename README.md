@@ -28,6 +28,26 @@ Add `?print=1` to any flyer URL to open the print dialog as soon as it's ready
 A flyer is listed as unavailable (with the reason) when the feed has nothing
 for it, e.g. no homes means no pricing sheet.
 
+## Brand
+
+Tokens and rules follow the Sandlin DESIGN.md: Cormorant Garamond display
+(uppercase, wide-tracked, lining figures), Poppins for everything else, navy
+`#002147` structure, 2px navy framing, square photo frames, fonts self-hosted.
+
+Two tiers, never mixed in one piece:
+
+| | Sandlin Homes | Sandlin Signature |
+|---|---|---|
+| Logo | silver arch (`logo-navy.png` / `logo-white.png` on navy) | gold arch (`logo-signature.png`) |
+| Accent | slate-blue `#8B9EB7` | champagne `#E4CB84` |
+| "Ready Now" tag | lime `#E0F19C` ribbon | navy with champagne text (no ribbons) |
+
+A community is Signature when its BDX `<Builder><BrandName>` contains
+"Signature", or when it's named in `SIGNATURE_COMMUNITIES`. There is no reversed
+(white) Signature logo yet, so on navy it sits on a white plate; drop a
+`logo-signature-white.png` in `app/static/` and swap it in
+`templates/partials/logo.html` when one exists.
+
 ## Data
 
 `app/bdx.py` fetches `BDX_FEED_URL`, parses it, and caches the result for
@@ -60,7 +80,8 @@ python -m unittest                       # parser/format tests
 ```
 
 Settings (environment variables): `BDX_FEED_URL`, `BDX_CACHE_TTL` (default 900 s),
-`BDX_TIMEOUT` (20 s), `DISCLAIMER` (footer text).
+`BDX_TIMEOUT` (20 s), `DISCLAIMER` (footer text), `SIGNATURE_COMMUNITIES`
+(comma-separated community names).
 
 Deploys anywhere that runs a Python web process (`Procfile` included for
 Railway/Heroku-style hosts).

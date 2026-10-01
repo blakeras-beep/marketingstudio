@@ -1,5 +1,6 @@
 {% extends "flyers/_base.html" %}
 {% block pages %}
+{% from "partials/logo.html" import logo %}
 {% set page_no, page_count = 1, 1 %}
 {% set sch = c.schools %}{% set ct = c.contact %}
 <section class="sheet">
@@ -7,12 +8,12 @@
     <img class="photo" src="{{ c.hero or '/static/placeholder.svg' }}" alt="">
     <div class="cap on-navy">
       <div>
-        <div class="eyebrow">A Sandlin Homes Community</div>
+        <div class="eyebrow">A Sandlin {{ "Signature" if c.tier == "signature" else "Homes" }} Community</div>
         <h1>{{ c.name }}</h1>
         <div style="font-size:9pt;letter-spacing:.14em;text-transform:uppercase;color:var(--navy-200);margin-top:6px">
           {{ city_line(c.city, c.state, c.zip) }}</div>
       </div>
-      <img class="logo" src="/static/logo-white.png" alt="Sandlin Homes">
+      {{ logo(c, "navy", 28) }}
     </div>
   </div>
 

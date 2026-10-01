@@ -90,6 +90,13 @@ class ParseTest(unittest.TestCase):
         self.assertIsNone(orphan.plan)
         self.assertEqual(self.c.home("4-orphan-st"), orphan)
 
+    def test_tier(self):
+        self.assertEqual(self.c.tier, "homes")
+        sig = bdx.parse(b"<Builders><Builder><BrandName>Sandlin Signature</BrandName>"
+                        b"<Subdivision><SubdivisionName>X</SubdivisionName></Subdivision>"
+                        b"</Builder></Builders>")[0]
+        self.assertEqual((sig.brand, sig.tier), ("Sandlin Signature", "signature"))
+
     def test_derived(self):
         self.assertEqual(self.c.price_from, 100000)
         self.assertEqual(self.c.sqft_range, (1500, 1500))
