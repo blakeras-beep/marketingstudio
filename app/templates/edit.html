@@ -26,6 +26,8 @@
     {% if f.kind in ('lines', 'para', 'features') %}<textarea name="{{ f.key }}" rows="{{ 28 if f.kind == 'features' else (8 if f.kind == 'para' else 5) }}" {{ 'class=mono' if f.kind == 'features' }}>{{ vals.get('community', cs, f.key) or '' }}</textarea>
     {% else %}<input name="{{ f.key }}" value="{{ vals.get('community', cs, f.key) or '' }}">{% endif %}
     {% if f.hint %}<small>{{ f.hint }}</small>{% endif %}
+    {% set from_bp = bp.hoa(c) if f.key == 'hoa' else (bp.tax_rate(c) if f.key == 'tax_rate' else None) %}
+    {% if from_bp %}<small class="flag">Blueprint has {{ from_bp }}; the flyers print Blueprint's value.</small>{% endif %}
   </label>
   {% endif %}
   {% endfor %}

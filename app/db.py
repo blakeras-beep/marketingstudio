@@ -50,6 +50,16 @@ SCHEMA = [
         updated_by INTEGER,
         updated_at TEXT NOT NULL
     )""",
+    # Last copy of every home the BDX feed listed, so a SOLD home (Blueprint) stays on the flyers
+    # after the website drops it, until it closes (see app/homes_seen.py).
+    """CREATE TABLE IF NOT EXISTS homes_seen (
+        community TEXT NOT NULL,      -- SubdivisionNumber (else the community slug)
+        home_id TEXT NOT NULL,
+        address_key TEXT NOT NULL,
+        data TEXT NOT NULL,           -- the Home as JSON
+        seen_at TEXT NOT NULL,
+        PRIMARY KEY (community, home_id)
+    )""",
 ]
 
 _is_pg = DATABASE_URL.startswith(("postgres://", "postgresql://"))

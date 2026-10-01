@@ -4,7 +4,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from . import auth, bdx, inputs
+from . import auth, bdx, blueprint, inputs
 from .flyers import sorted_homes, sorted_plans
 from .web import templates
 
@@ -35,6 +35,7 @@ def edit_page(request: Request, slug: str, msg: str = ""):
         "plans": sorted_plans(c), "homes": sorted_homes(c),
         "plan_subject": lambda p: inputs.plan_subject(c, p.name or ""),
         "F": inputs, "last": inputs.last_edit("community", [cs]),
+        "bp": blueprint.current(),
     })
 
 

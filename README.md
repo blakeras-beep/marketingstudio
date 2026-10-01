@@ -103,6 +103,23 @@ else its lowest available spec price; a home whose move-in date has passed
 prints "Ready Now"; a spec with no photos of its own shows its plan's elevation
 and floor plan. A price of 0 is treated as "not priced" and prints `—`.
 
+### Blueprint (Big Board)
+
+What the website feed doesn't carry comes from Blueprint's read-only
+`GET /api/feed/marketing` (`app/blueprint.py`), cached for `BLUEPRINT_CACHE_TTL`
+seconds, last good copy kept on failure:
+
+- **SOLD**: a home Blueprint has Under Contract. When the website drops a sold
+  home, its last feed copy (`homes_seen` table) is put back so it keeps the SOLD
+  stamp until it settles and leaves Blueprint.
+- **Was-price**: Blueprint's retail price, shown only when above the price the
+  flyer prints.
+- **HOA and tax rate**: `community_rules`. These override marketing's HOA and
+  tax inputs; the edit page shows Blueprint's value when there is one.
+
+Homes match on community name + street address (abbreviations normalised).
+Unset `BLUEPRINT_URL` / `MARKETING_FEED_TOKEN` and those lines are simply left off.
+
 JSON for debugging or for other tools: `GET /api/communities`,
 `GET /api/communities/{community}`, `GET /healthz`.
 
@@ -117,7 +134,8 @@ python -m unittest                       # parser, format, image and R2 tests (R
 
 Settings (environment variables): `BDX_FEED_URL`, `BDX_CACHE_TTL` (default 900 s),
 `BDX_TIMEOUT` (20 s), `DISCLAIMER` (footer text), `SIGNATURE_COMMUNITIES`
-(comma-separated community names).
+(comma-separated community names), `BLUEPRINT_URL` + `MARKETING_FEED_TOKEN`
+(the same token as on Blueprint), `BLUEPRINT_CACHE_TTL` (900 s).
 
 Deploys anywhere that runs a Python web process. Railway: `railway.json` sets
 the start command and a `/livez` health check (independent of the feed, so a

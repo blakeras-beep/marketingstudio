@@ -20,13 +20,14 @@
   {% set y = 178.7 + loop.index0 * 28.3 %}{% set was = bp.was_price(c, h) %}
   <div class="a band" style="top:{{ y }}pt"></div>
   <div class="a cell addr" style="left:38.3pt;top:{{ y + 2.3 }}pt">{{ h.address or h.id }}</div>
-  {% if bp.is_sold(c, h) %}<div class="a soldstamp" style="left:56pt;top:{{ y - 3 }}pt">SOLD</div>{% endif %}
   <div class="a cell c" style="left:142.5pt;width:80pt;top:{{ y + 2.3 }}pt">{{ h.sqft | sqft }}</div>
   <div class="a cell c" style="left:200.7pt;width:80pt;top:{{ y + 2.3 }}pt">{{ h.stories | num }}</div>
   <div class="a cell c" style="left:259pt;width:80pt;top:{{ y + 2.3 }}pt">{{ h.beds | num }}</div>
   <div class="a cell c" style="left:310.5pt;width:80pt;top:{{ y + 2.3 }}pt">{{ h.baths | baths(h.half_baths) }}</div>
   <div class="a cell c" style="left:364.5pt;width:80pt;top:{{ y + 2.3 }}pt;overflow:hidden">{{ h.plan | text }}</div>
-  {% if was and h.price and was > h.price %}
+  {% if bp.is_sold(c, h) %}{# SOLD takes the Old Price cell: the address stays readable #}
+  <div class="a cell c soldstamp" style="left:427.1pt;width:80pt;top:{{ y + 2 }}pt">SOLD</div>
+  {% elif was and h.price and was > h.price %}
   <div class="a cell c money strike" style="left:427.1pt;width:80pt;top:{{ y + 2.3 }}pt">{{ was | money }}</div>
   {% endif %}
   <div class="a cell c money" style="left:495.6pt;width:80pt;top:{{ y + 2.3 }}pt">{{ h.price | money }}</div>

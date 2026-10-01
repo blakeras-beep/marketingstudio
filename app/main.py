@@ -11,7 +11,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 
-from . import accounts, auth, bdx, blueprint, db, edit, images, inputs, store
+from . import accounts, auth, bdx, blueprint, db, edit, homes_seen, images, inputs, store
 from .web import templates
 from .flyers import (
     COMMUNITY_FLYERS, ELEVATION_ROWS, FLYERS_BY_KEY, GRID_CARDS, HOME_FLYER, PLAN_FLYER, PLAN_ROWS,
@@ -32,6 +32,8 @@ PUBLIC_PATHS = {"/login", "/livez", "/healthz", "/healthz/images", "/favicon.ico
 @app.on_event("startup")
 def _startup() -> None:
     db.init()
+    if homes_seen.on_feed_load not in bdx.on_load:
+        bdx.on_load.append(homes_seen.on_feed_load)
     note = auth.bootstrap_admin()
     if note:
         log.warning(note)
@@ -180,7 +182,7 @@ def healthz():
     return JSONResponse(
         {"ok": ok, "communities": len(st.communities), "image_store": store.get_store().name,
          "fetched_at": st.fetched_at.isoformat() if st.fetched_at else None,
-         "error": st.error},
+         "error": st.error, "blueprint": blueprint.status()},
         status_code=200 if ok else 503,
     )
 

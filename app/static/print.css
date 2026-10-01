@@ -121,7 +121,7 @@ img{ display:block; }
 .fl .addr{ font-weight:700; color:var(--ink-x); max-width:128pt; overflow:hidden; text-overflow:ellipsis; }
 .fl .money{ font-weight:700; color:var(--price-x); }
 .fl .strike{ text-decoration:line-through; text-decoration-color:var(--red); text-decoration-thickness:1.6pt; }
-.fl .soldstamp{ font:800 17pt/1 'EB Garamond',serif; color:#e01b1b; letter-spacing:.04em; }
+.fl .soldstamp{ font:800 14pt/1 'EB Garamond',serif; color:#e01b1b; letter-spacing:.04em; }
 .fp2 .hd{ top:211.5pt; font:700 13.3pt/16.2pt 'Carlito',sans-serif; white-space:nowrap; }
 .fp2 .band{ left:18.1pt; width:575.1pt; height:15.2pt; background:var(--row); }
 .fp2 .cell{ font:11.4pt/13.9pt 'Carlito',sans-serif; white-space:nowrap; }

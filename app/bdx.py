@@ -11,6 +11,7 @@ phone is AreaCode/Prefix/Suffix, Schools sits at Subdivision level).
 from __future__ import annotations
 
 import re
+import logging
 import threading
 import time
 import urllib.request
@@ -555,6 +556,9 @@ class FeedState:
 
 _state = FeedState()
 _lock = threading.Lock()
+# Called with the fresh communities after every successful parse (main.py: keep SOLD homes).
+# A failing hook is logged and never costs the feed.
+on_load: list = []
 
 
 def _fetch() -> bytes:
@@ -575,7 +579,13 @@ def state(force: bool = False) -> FeedState:
         if force or stale or _state.fetched_at is None:
             _state.checked_at = time.monotonic()
             try:
-                _state.communities = parse(_fetch())
+                communities = parse(_fetch())
+                for hook in on_load:
+                    try:
+                        hook(communities)
+                    except Exception:
+                        logging.getLogger("studio.bdx").exception("feed hook %s failed", getattr(hook, "__name__", hook))
+                _state.communities = communities
                 _state.fetched_at = datetime.now(timezone.utc)
                 _state.error = None
             except Exception as e:  # network, HTTP, XML — keep last good data
