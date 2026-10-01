@@ -9,6 +9,41 @@ month's prices and inventory.
 a missing value prints `—`, a missing photo shows placeholder art, nothing is
 invented. Every piece carries the Equal Housing Opportunity mark. US Letter only.
 
+## Accounts and roles
+
+Everything requires signing in. Roles (enforced server-side on every route):
+
+| Role | Can |
+|---|---|
+| Admin | create and manage users (`/admin/users`), edit everything |
+| Marketing | edit flyer inputs (`/c/{community}/edit`) |
+| CSM | view and download flyers |
+
+The first admin comes from `ADMIN_EMAIL` / `ADMIN_PASSWORD` (also restores access if no
+active admin is left). There is always at least one active admin. Users change their own
+password at `/account`; an admin reset signs the user out everywhere.
+
+Storage: Postgres via `DATABASE_URL` (Railway: add a PostgreSQL database and reference its
+`DATABASE_URL` from this service). Without it the app uses an in-memory SQLite database,
+which is only for local dev (`DATABASE_URL=sqlite:///studio.db` keeps it on disk).
+
+## Flyer inputs (marketing)
+
+Facts neither the BDX feed nor Blueprint carries, edited per community at
+`/c/{community}/edit`: flyer description override, hero and amenity photo picks (from the
+community's feed photos only), lot size, HOA / tax rate fallbacks, utility providers,
+attractions, plan bed/bath ranges and per-home feature bullets. Every change is kept in
+`input_history`. **Temporary home**: these are meant to move upstream (Big Board /
+Blueprint) later; the field list lives in one place (`app/inputs.py`).
+
+## Design source
+
+Each flyer reproduces a current Sandlin original from `reference/flyers/` (Canva and Excel
+PDFs), positioned in points on the original's coordinates. Fonts: Cormorant Garamond,
+Poppins and EB Garamond as in the Canva originals; Carlito (metric-compatible with Calibri)
+for the Excel sheets. Logos, Equal Housing marks and grid icons were extracted from the
+originals (`app/static/brand/`).
+
 ## What's in the repository
 
 Open `/`, pick a community, and preview or download any flyer:
@@ -16,9 +51,9 @@ Open `/`, pick a community, and preview or download any flyer:
 | Flyer | Route | Pages |
 |---|---|---|
 | Community Info Sheet | `/c/{community}/info` | 1 |
-| Inventory Pricing Sheet | `/c/{community}/pricing` | paginates (25 rows, then 29 per page) |
-| Floor Plans Sheet | `/c/{community}/plans` | paginates (25, then 29) |
-| Inventory Grid Flyer | `/c/{community}/grid` | 6 photo cards per page, membership always live |
+| Inventory List | `/c/{community}/pricing` | 15 homes per page |
+| Price Sheet (available floor plans) | `/c/{community}/plans` | 12 plans per page |
+| Photo Inventory | `/c/{community}/grid` | 10 photo cards per page, membership always live |
 | Single-Home Flyer | `/c/{community}/homes/{home}` | 2 (photo + facts, floor plan) |
 
 Add `?print=1` to any flyer URL to open the print dialog as soon as it's ready

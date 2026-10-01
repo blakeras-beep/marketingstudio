@@ -19,11 +19,16 @@ from .auth import now
 class Field:
     key: str
     label: str
-    kind: str = "text"   # text | lines
+    kind: str = "text"   # text | lines | para | photo | photos
     hint: str = ""
 
 
 COMMUNITY_FIELDS = [
+    Field("description", "Flyer description", "para",
+          "Optional. Replaces the feed's community description on the Community Info sheet. "
+          "One paragraph per line. Blank = use the feed's copy."),
+    Field("hero_photo", "Hero photo", "photo", "Pick from the community's photos in the feed. None = the feed's preferred photo."),
+    Field("amenity_photos", "Amenity photos", "photos", "Pick up to 3 for the Community Info sheet. None = the feed's next three."),
     Field("lot_size", "Lot size", hint="e.g. Standard, 50' lots, Half acre"),
     Field("hoa", "HOA", hint="Shown only when Blueprint has no HOA for this community, e.g. $900/year"),
     Field("tax_rate", "Tax rate", hint="Shown only when Blueprint has no tax rate, e.g. 1.909%"),
@@ -77,8 +82,10 @@ def save(scope: str, subject: str, values: dict[str, str], user_id: int) -> int:
             if key not in allowed:
                 continue
             f = allowed[key]
-            value = "\n".join(ln.strip() for ln in (raw or "").splitlines() if ln.strip()) if f.kind == "lines" \
-                else " ".join((raw or "").split())
+            if f.kind in ("lines", "para", "photos"):
+                value = "\n".join(ln.strip() for ln in (raw or "").splitlines() if ln.strip())
+            else:
+                value = " ".join((raw or "").split())
             cur = c.one("SELECT value FROM inputs WHERE scope = ? AND subject = ? AND field = ?",
                         (scope, subject, key))
             if (cur["value"] if cur else "") == value:
@@ -107,3 +114,22 @@ def last_edit(scope: str, subjects: list[str]) -> dict | None:
         return c.one(f"SELECT h.updated_at, u.name FROM input_history h LEFT JOIN users u ON u.id = h.updated_by "
                      f"WHERE h.scope = ? AND h.subject IN ({marks}) ORDER BY h.id DESC LIMIT 1",
                      (scope, *subjects))
+
+
+def community_photos(c, vals: "Inputs") -> tuple[str | None, list[str]]:
+    """Hero and up to three amenity photos: marketing's picks when they're still in the
+    feed, otherwise the feed's preferred photo and the next three."""
+    cs = community_subject(c)
+    feed = list(c.photos)
+    hero = vals.get("community", cs, "hero_photo")
+    hero = hero if hero in feed else c.hero
+    picks = [u for u in vals.lines("community", cs, "amenity_photos") if u in feed][:3]
+    if not picks:
+        picks = [u for u in feed if u != hero][:3]
+    return hero, picks
+
+
+def description(c, vals: "Inputs") -> list[str]:
+    """Flyer description paragraphs: marketing's override, else the feed's copy."""
+    over = vals.lines("community", community_subject(c), "description")
+    return over or [p for p in (c.description or "").split("\n") if p.strip()]

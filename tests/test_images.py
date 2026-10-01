@@ -56,6 +56,15 @@ class RenderTest(unittest.TestCase):
         out = Image.open(io.BytesIO(self._render(_jpeg(3000, 4000), 1500, 1000)))
         self.assertEqual(out.size, (750, 1000))
 
+    def test_line_art_is_trimmed_without_rescaling(self):
+        buf = io.BytesIO()
+        im = Image.new("RGB", (1000, 800), "white")
+        im.paste((0, 0, 0), (400, 300, 600, 500))      # a 200 x 200 drawing on a big white page
+        im.save(buf, "JPEG")
+        out = Image.open(io.BytesIO(self._render(buf.getvalue(), 2000, 2000, la=True)))
+        self.assertLess(out.width, 260)                 # trimmed to the drawing plus a small margin
+        self.assertGreater(out.width, 199)              # never scaled down or cut into
+
     def test_small_jpeg_passes_through_untouched(self):
         data = _jpeg(800, 600)
         self.assertEqual(self._render(data, 1700), data)

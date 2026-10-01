@@ -9,11 +9,25 @@
 <h2 id="community">Community facts</h2>
 <form method="post" action="/c/{{ c.slug }}/edit/community" class="form card">
   {% for f in F.COMMUNITY_FIELDS %}
+  {% if f.kind in ('photo', 'photos') %}
+  {% set chosen = vals.lines('community', cs, f.key) %}
+  <fieldset class="picker"><legend>{{ f.label }}</legend>
+    {% if f.hint %}<small>{{ f.hint }}</small>{% endif %}
+    <div class="thumbs">
+      {% for u in c.photos %}
+      <label class="thumb"><input type="{{ 'radio' if f.kind == 'photo' else 'checkbox' }}" name="{{ f.key }}" value="{{ u }}" {{ 'checked' if u in chosen }}>
+        <img src="{{ img(u, 1.2) }}" alt="" loading="lazy"></label>
+      {% endfor %}
+    </div>
+    {% if f.kind == 'photo' %}<label class="thumb none"><input type="radio" name="{{ f.key }}" value="" {{ 'checked' if not chosen }}> Use the feed's preferred photo</label>{% endif %}
+  </fieldset>
+  {% else %}
   <label>{{ f.label }}
-    {% if f.kind == 'lines' %}<textarea name="{{ f.key }}" rows="5">{{ vals.get('community', cs, f.key) or '' }}</textarea>
+    {% if f.kind in ('lines', 'para') %}<textarea name="{{ f.key }}" rows="{{ 8 if f.kind == 'para' else 5 }}">{{ vals.get('community', cs, f.key) or '' }}</textarea>
     {% else %}<input name="{{ f.key }}" value="{{ vals.get('community', cs, f.key) or '' }}">{% endif %}
     {% if f.hint %}<small>{{ f.hint }}</small>{% endif %}
   </label>
+  {% endif %}
   {% endfor %}
   <button class="btn primary">Save community facts</button>
 </form>

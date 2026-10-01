@@ -39,7 +39,47 @@
   });
   var fonts = document.fonts ? document.fonts.ready : Promise.resolve();
   var failsafe = new Promise(function(res){ setTimeout(res, 12000); });
+  // data-autofit="<min pt>": shrink the font until the text fits its box width (names, addresses
+  // vary in length; the box stays exactly where the original has it). Add data-autofit-h to
+  // also fit the box height (multi-line blocks with a fixed height).
+  // data-drop-paras: before shrinking, drop whole trailing <p>s that don't fit (feed copy is
+  // often longer than the flyer has room for; the first paragraphs are kept intact).
+  function fits(el){
+    return el.scrollWidth <= el.clientWidth + 0.5 &&
+      (!el.hasAttribute('data-autofit-h') || el.scrollHeight <= el.clientHeight + 0.5);
+  }
+  function autofit(){
+    document.querySelectorAll('[data-drop-paras]').forEach(function(el){
+      var ps = el.querySelectorAll('p');
+      for (var i = ps.length - 1; i > 0 && el.scrollHeight > el.clientHeight + 0.5; i--) ps[i].remove();
+    });
+    document.querySelectorAll('[data-autofit]').forEach(function(el){
+      var min = parseFloat(el.getAttribute('data-autofit')) || 6;
+      var pt = parseFloat(getComputedStyle(el).fontSize) * 0.75, guard = 120;
+      var lh = parseFloat(el.getAttribute('data-autofit-lh'));
+      while (guard-- > 0 && pt > min && !fits(el)) {
+        pt -= 0.25; el.style.fontSize = pt + 'pt';
+        if (lh) el.style.lineHeight = (pt * lh) + 'pt';
+      }
+    });
+  }
+  // .fp-scale: lay floor plan images out at ONE shared scale (largest that fits), so a
+  // second floor stays smaller than the first, as on the printed originals.
+  function scalePlans(){
+    document.querySelectorAll('.fp-scale').forEach(function(box){
+      var imgs = Array.prototype.slice.call(box.querySelectorAll('img.plan-img')).filter(function(i){ return i.naturalWidth; });
+      if (!imgs.length) return;
+      var cap = box.querySelector('figcaption') ? 30 : 0, gap = 18 * (imgs.length - 1);
+      var W = box.clientWidth - gap, H = box.clientHeight - cap;
+      var sw = imgs.reduce(function(a, i){ return a + i.naturalWidth; }, 0);
+      var mh = Math.max.apply(null, imgs.map(function(i){ return i.naturalHeight; }));
+      var k = Math.min(W / sw, H / mh);
+      imgs.forEach(function(i){ i.style.width = (i.naturalWidth * k) + 'px'; i.style.height = (i.naturalHeight * k) + 'px'; });
+    });
+  }
   Promise.race([Promise.all([fonts].concat(settled)), failsafe]).then(function(){
+    scalePlans();
+    autofit();
     var over = false;
     document.querySelectorAll('.sheet').forEach(function(s){
       s.querySelectorAll('[data-fit]').forEach(function(el){

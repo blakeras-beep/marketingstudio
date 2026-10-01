@@ -1,168 +1,132 @@
 /* Sandlin Marketing Studio — flyer print styles.
-   Palette and type follow the Sandlin print design system (navy, Cormorant
-   Garamond display, Poppins body). Tokens per the Sandlin DESIGN.md. */
+   Every flyer reproduces a current Sandlin original (reference/flyers/...) in points:
+   positions, sizes and colors are measured from the vector PDFs, so `left:20.3pt`
+   below means the same spot as on the Canva/Excel original. */
 
 :root{
-  --navy:#002147; --navy-700:#0A2F5C; --navy-600:#13416F; --navy-500:#2C5581;
-  --navy-300:#8B9EB7; --navy-200:#BDC9D9; --navy-100:#DFE5EE; --navy-50:#F1F4F8;
-  --stone:#CEB290; --parchment:#F7F2E9; --parchment-line:#E6DCC8;
-  --ink:#002147; --ink-muted:#334E73; --ink-subtle:#6B7D94; --border:#E3E7EC;
-  --lime:#E0F19C; --gold:#E4CB84;
-  /* Tier accents (DESIGN.md): Homes = slate-blue arch + lime promo ribbon;
-     Signature = champagne only, no ribbons. */
-  --accent:#8B9EB7; --ribbon-bg:var(--lime); --ribbon-fg:var(--navy);
+  --navy:#002147; --navy-info:#001d48; --slate:#8b9eb7; --gray:#babcbe; --gray-x:#b9b9b9;
+  --stone:#ceb290; --row:#f2f2f2; --ink-x:#003b71; --price-x:#5b89b4; --red:#ff0000; --lime:#E0F19C; --gold:#E4CB84;
 }
-.tier-signature{ --accent:var(--gold); --ribbon-bg:var(--navy); --ribbon-fg:var(--gold); }
-
 @page{ size:letter; margin:0; }
 *{ box-sizing:border-box; }
 html,body{ margin:0; padding:0; }
-body{
-  font-family:'Poppins',sans-serif; font-size:9pt; line-height:1.5; color:var(--ink);
-  background:#5f6b7a; -webkit-print-color-adjust:exact; print-color-adjust:exact;
-}
+body{ background:#5f6b7a; -webkit-print-color-adjust:exact; print-color-adjust:exact; font-family:'Poppins',sans-serif; }
 img{ display:block; }
 
 /* ---------- screen toolbar (never printed) ---------- */
 .toolbar{ position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:16px;
-  background:var(--navy); color:#fff; padding:10px 20px; font-size:13px; }
-.toolbar a{ color:var(--navy-200); text-decoration:none; }
+  background:var(--navy); color:#fff; padding:10px 20px; font:13px 'Poppins',sans-serif; }
+.toolbar a{ color:#BDC9D9; text-decoration:none; }
 .toolbar .t{ font-weight:600; }
-.toolbar .live{ color:var(--navy-200); font-size:12px; }
+.toolbar .live{ color:#BDC9D9; font-size:12px; }
 .toolbar .sp{ flex:1; }
-.toolbar button{ font:600 12px 'Poppins',sans-serif; letter-spacing:.16em; text-transform:uppercase; background:#fff; color:var(--navy);
-  border:0; border-radius:4px; padding:8px 16px; cursor:pointer; }
+.toolbar button{ font:600 12px 'Poppins',sans-serif; letter-spacing:.16em; text-transform:uppercase; background:#fff;
+  color:var(--navy); border:0; border-radius:4px; padding:8px 16px; cursor:pointer; }
 .toolbar button:disabled{ opacity:.5; cursor:wait; }
-.overflow-warn{ display:none; background:#B42318; color:#fff; padding:8px 20px; font-size:13px; }
+.overflow-warn{ display:none; background:#B42318; color:#fff; padding:8px 20px; font:13px 'Poppins',sans-serif; }
 .has-overflow .overflow-warn{ display:block; }
 .pages{ padding:24px 0 48px; }
 
-/* ---------- sheet: exact US Letter ---------- */
-.sheet{ width:8.5in; height:11in; margin:0 auto 24px; background:#fff; position:relative;
-  overflow:hidden; box-shadow:0 2px 16px rgba(0,0,0,.25); }
+/* ---------- sheet: exact US Letter, absolute layout in points ---------- */
+.sheet{ width:612pt; height:792pt; margin:0 auto 24px; background:#fff; position:relative; overflow:hidden;
+  box-shadow:0 2px 16px rgba(0,0,0,.25); color:#000; }
+.sheet .a{ position:absolute; }
 .sheet.overflowing{ outline:4px solid #B42318; }
-.inner{ position:absolute; left:.55in; right:.55in; }
-
 @media print{
   body{ background:#fff; }
   .toolbar,.overflow-warn{ display:none !important; }
   .pages{ padding:0; }
-  .sheet{ margin:0; box-shadow:none; page-break-after:always; break-after:page; }
-  .sheet:last-child{ page-break-after:auto; break-after:auto; }
+  .sheet{ margin:0; box-shadow:none; break-after:page; }
+  .sheet:last-child{ break-after:auto; }
   .sheet.overflowing{ outline:none; }
 }
+.cover{ width:100%; height:100%; object-fit:cover; }
+.contain{ width:100%; height:100%; object-fit:contain; }
+.serif{ font-family:'Cormorant Garamond',serif; font-feature-settings:'lnum' 1; font-variant-numeric:lining-nums; }
+.eb{ font-family:'EB Garamond',serif; font-feature-settings:'lnum' 1; font-variant-numeric:lining-nums; }
+.xl{ font-family:'Carlito','Calibri',sans-serif; }
+.nowrap{ white-space:nowrap; }
+.r{ text-align:right; } .c{ text-align:center; }
+.sold{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:'EB Garamond',serif;
+  font-weight:800; color:#e01b1b; letter-spacing:.06em; text-shadow:0 0 2px rgba(255,255,255,.6); }
 
-/* ---------- type ---------- */
-.display,h1,h2,h3{ font-family:'Cormorant Garamond',serif; font-weight:500; margin:0;
-  text-transform:uppercase; color:var(--navy);
-  font-feature-settings:'lnum' 1; font-variant-numeric:lining-nums; }
-h1{ font-size:34pt; letter-spacing:.12em; line-height:1.02; font-weight:400; }
-h2{ font-size:16pt; letter-spacing:.1em; line-height:1.15; }
-h3{ font-size:12pt; letter-spacing:.08em; line-height:1.2; }
-.eyebrow{ font-weight:600; font-size:7.2pt; letter-spacing:.3em; text-transform:uppercase;
-  color:var(--ink-subtle); margin:0 0 4px; }
-.on-navy{ color:#fff; }
-.on-navy .eyebrow,.on-navy.eyebrow{ color:var(--accent); }
-.on-navy h1,.on-navy h2,.on-navy h3{ color:#fff; }
-p{ margin:0 0 7px; }
-.muted{ color:var(--ink-muted); }
-.clamp{ display:-webkit-box; -webkit-box-orient:vertical; overflow:hidden; white-space:pre-line; }
+/* ================= Community Info (Canva original) ================= */
+.fi .band{ left:0; top:0; width:612pt; height:93pt; background:var(--navy-info); }
+.fi .stripe{ left:0; width:612pt; height:5.4pt; background:var(--gray); }
+.fi .name{ right:24.6pt; top:8.3pt; width:330pt; font:700 45pt/1.22 'Cormorant Garamond',serif; color:#fff; text-align:right; white-space:nowrap; }
+.fi .subt{ right:24.6pt; top:58.5pt; font:16pt/1.64 'Poppins',sans-serif; color:var(--gray); white-space:nowrap; }
+.fi .body{ left:20.3pt; top:459pt; width:345pt; height:262pt; font:12pt/17.25pt 'Poppins',sans-serif; overflow:hidden; }
+.fi .body p{ margin:0 0 17.25pt; }
+.fi .side{ left:383.7pt; top:350.5pt; width:228.3pt; height:441.5pt; background:var(--navy-info); }
+.fi .facts{ left:396.8pt; top:366.5pt; width:205pt; height:420pt; color:#fff; overflow:hidden; }
+.fi .facts h4{ margin:0; font:400 14pt/22.9pt 'Poppins',sans-serif; letter-spacing:0; }
+.fi .facts ul{ margin:0 0 0; padding:0; list-style:none; }
+.fi .facts li{ position:relative; padding-left:22.1pt; font:13pt/20.25pt 'Poppins',sans-serif; white-space:nowrap; overflow:hidden; }
+.fi .facts li:before{ content:""; position:absolute; left:8.3pt; top:8.1pt; width:4.5pt; height:4.5pt; border-radius:50%; background:#fff; }
+.fi .contact{ left:0; top:725pt; width:383.9pt; height:67pt; background:var(--gray); }
+.fi .ct{ font:13pt/13.5pt 'Poppins',sans-serif; color:#000; }
+.fi .ct b{ font-weight:600; display:block; margin-bottom:2.2pt; }
 
-/* ---------- header bands ---------- */
-.band{ position:absolute; left:0; right:0; top:0; background:var(--navy); color:#fff;
-  padding:.42in .55in .3in; display:flex; justify-content:space-between; align-items:flex-end; }
-.band .logo{ height:30px; }
-.band .rule{ height:2px; width:54px; background:var(--accent); margin:10px 0 8px; }
-.band .sub{ font-size:8.5pt; letter-spacing:.12em; text-transform:uppercase; color:var(--navy-200); }
-.band .right{ text-align:right; }
-.band .eff{ font-size:7.2pt; letter-spacing:.22em; text-transform:uppercase; color:var(--navy-200); margin-top:10px; white-space:nowrap; }
-.band.slim{ padding:.3in .55in .2in; }
-.band.slim h2{ color:#fff; }
+/* ================= Single-home inventory flyer (Canva original) ================= */
+.fh .hero{ left:0; top:0; width:612pt; height:452.9pt; }
+.fh .pennant{ left:0; top:11.4pt; width:275.7pt; height:61.5pt; background:var(--navy);
+  clip-path:polygon(0 0, 260.6pt 0, 236.6pt 50%, 275.7pt 100%, 0 100%); }
+.fh .comm{ left:0; width:612pt; text-align:center; color:#fff; text-shadow:2pt 2pt 3pt rgba(0,0,0,.55); }
+.fh .plate{ left:153.1pt; top:332.6pt; width:305.9pt; height:43.4pt; background:var(--stone); }
+.fh .addr{ font:700 30pt/43.4pt 'Cormorant Garamond',serif; color:var(--navy); text-align:center; white-space:nowrap; }
+.fh .band{ left:0; top:360.2pt; width:612pt; height:92.7pt; background:var(--navy); }
+.fh .stat{ color:#fff; text-align:center; }
+.fh .stat .v{ font:400 35pt/42.4pt 'Cormorant Garamond',serif; }
+.fh .stat .l{ font:9pt/12.6pt 'Poppins',sans-serif; letter-spacing:.42em; margin-right:-.42em; }
+.fh .slate{ left:0; width:612pt; height:10.6pt; background:var(--slate); }
+.fh .plan{ font:700 28pt/34pt 'Cormorant Garamond',serif; color:var(--navy); text-align:center; white-space:nowrap; }
+.fh .feat{ left:34.1pt; top:528.4pt; width:268pt; height:180pt; font:15pt/21pt 'Poppins',sans-serif; color:var(--navy); overflow:hidden; }
+.fh .feat div{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fh .divider{ left:306pt; top:496.2pt; width:1.5pt; height:195.8pt; background:var(--navy); }
+.fh .rc{ left:310pt; width:302pt; text-align:center; color:var(--navy); white-space:nowrap; }
+.fh .foot{ left:0; top:722pt; width:612pt; height:70pt; background:var(--navy); }
+.fh .www{ left:0; top:741.5pt; width:596pt; text-align:center; font:400 25pt/30.3pt 'Cormorant Garamond',serif; color:#fff; letter-spacing:.2em; }
+.fh .fp{ display:flex; gap:12pt; align-items:flex-end; left:24pt; right:24pt; top:60pt; bottom:60pt; }
+.fh .fp{ justify-content:center; }
+.fh .fp figure{ margin:0; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; }
+.fh .fp figcaption{ font:15pt/21pt 'Poppins',sans-serif; color:var(--navy); margin-top:6pt; }
 
-/* ---------- footer (every sheet) ---------- */
-.foot{ position:absolute; left:.55in; right:.55in; bottom:.32in; border-top:1.5px solid var(--navy);
-  padding-top:8px; display:grid; grid-template-columns:auto 1fr auto; gap:14px; align-items:start; }
-.foot .logo{ height:22px; margin-top:2px; }
-.foot .disc{ font-size:5.9pt; line-height:1.45; color:var(--ink-subtle); }
-.foot .meta{ font-size:6.4pt; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-subtle);
-  text-align:right; line-height:1.6; white-space:nowrap; }
-.foot .contact{ font-size:7.4pt; font-weight:600; color:var(--navy); letter-spacing:.04em; }
-.foot .eho{ height:30px; width:auto; color:var(--navy); margin-left:auto; margin-top:4px; }
+/* ================= Photo inventory grid (Canva original) ================= */
+.fg .head{ left:0; top:0; width:612pt; height:154.9pt; background:var(--navy); overflow:hidden; }
+.fg .head img{ opacity:.42; }
+.fg .t1{ left:190.1pt; top:13.1pt; width:410pt; font:600 48pt/62.7pt 'EB Garamond',serif; color:#fff; white-space:nowrap; }
+.fg .t2{ left:190.1pt; top:71.4pt; font:600 28pt/36.6pt 'EB Garamond',serif; color:#fff; white-space:nowrap; }
+.fg .t3{ left:190.1pt; top:111pt; font:22pt/30.8pt 'Poppins',sans-serif; color:#fff; white-space:nowrap; }
+.fg .card{ width:293.2pt; height:103.1pt; border:3pt solid var(--navy); background:#fff; }
+.fg .card .ph{ left:4.6pt; top:6.4pt; width:120pt; height:87pt; overflow:hidden; }
+.fg .card .ad{ left:129.2pt; top:4.6pt; width:158pt; font:700 12pt/16.8pt 'Poppins',sans-serif; white-space:nowrap; overflow:hidden; }
+.fg .card .ic{ left:128.2pt; width:18pt; }
+.fg .card .sp{ left:151.5pt; font:8.7pt/12.2pt 'Poppins',sans-serif; white-space:nowrap; }
+.fg .card .pr{ right:6.6pt; top:36.3pt; font:13pt/18.2pt 'Poppins',sans-serif; text-align:right; white-space:nowrap; }
+.fg .card .was{ right:6.6pt; top:53.3pt; font:6pt/8.3pt 'Poppins',sans-serif; color:var(--red); text-align:right; white-space:nowrap; }
+.fg .card .pl{ right:0.4pt; top:85.9pt; width:78pt; font:8pt/11.2pt 'Poppins',sans-serif; text-align:right; white-space:nowrap; overflow:hidden; }
+.fg .foot{ left:0; top:735.1pt; width:612pt; height:56.9pt; background:var(--navy); }
+.fg .fx{ top:753.3pt; font:15pt/21pt 'Poppins',sans-serif; color:#fff; white-space:nowrap; }
 
-/* ---------- stats ---------- */
-.stats{ display:grid; grid-template-columns:repeat(4,1fr); border-top:1px solid var(--parchment-line);
-  border-bottom:1px solid var(--parchment-line); background:var(--parchment); }
-.stats > div{ padding:10px 14px; border-right:1px solid var(--parchment-line); }
-.stats > div:last-child{ border-right:0; }
-.stat-n{ font-family:'Cormorant Garamond',serif; font-size:20pt; font-weight:500; line-height:1.05;
-  color:var(--navy); font-feature-settings:'lnum' 1; font-variant-numeric:lining-nums; white-space:nowrap; }
-.stat-l{ font-size:6.6pt; font-weight:600; letter-spacing:.2em; text-transform:uppercase;
-  color:var(--ink-subtle); margin-top:3px; }
-
-/* ---------- cards / key-value ---------- */
-.card{ background:var(--navy-50); border-top:3px solid var(--navy); padding:12px 14px; margin-bottom:12px; }
-.card.warm{ background:var(--parchment); border-top-color:var(--stone); }
-.card h3{ margin-bottom:8px; }
-.kv{ display:grid; grid-template-columns:auto 1fr; column-gap:10px; row-gap:4px; font-size:8.2pt; }
-.kv .k{ font-size:6.6pt; font-weight:600; letter-spacing:.16em; text-transform:uppercase;
-  color:var(--ink-subtle); padding-top:2px; white-space:nowrap; }
-
-/* ---------- ledger tables (fixed row height keeps pagination exact) ---------- */
-table.ledger{ width:100%; border-collapse:collapse; table-layout:fixed; font-size:8.3pt; }
-.ledger th{ background:var(--navy); color:#fff; font-weight:600; font-size:6.6pt; letter-spacing:.14em;
-  text-transform:uppercase; text-align:left; padding:0 8px; height:28px; }
-.ledger td{ height:27px; padding:0 8px; border-bottom:1px solid var(--border); white-space:nowrap;
-  overflow:hidden; text-overflow:ellipsis; }
-.ledger tbody tr:nth-child(even) td{ background:var(--navy-50); }
-.ledger .r{ text-align:right; font-variant-numeric:tabular-nums; }
-.ledger .c{ text-align:center; font-variant-numeric:tabular-nums; }
-.ledger .price{ font-weight:600; }
-.ledger .addr{ font-weight:500; }
-.ledger .ready{ color:var(--navy-600); font-weight:600; }
-.cont{ font-size:7pt; letter-spacing:.2em; text-transform:uppercase; color:var(--ink-subtle);
-  text-align:right; margin-top:6px; }
-
-/* Signature has no reversed logo file: on navy it sits on a white plate. */
-.logo-plate{ display:inline-block; background:#fff; padding:6px 9px; line-height:0; }
-.logo-plate img{ display:block; }
-
-/* ---------- photos ---------- */
-.photo{ width:100%; height:100%; object-fit:cover; background:var(--navy-100); }
-.photo.contain{ object-fit:contain; background:#fff; }
-
-/* ---------- info sheet ---------- */
-.hero{ position:absolute; left:0; right:0; top:0; height:4.35in; }
-.hero .photo{ position:absolute; inset:0; }
-.hero .cap{ position:absolute; left:0; right:0; bottom:0; background:rgba(0,33,71,.92);
-  padding:.2in .55in .18in; display:flex; justify-content:space-between; align-items:flex-end; }
-.hero .cap .logo{ height:28px; }
-
-/* ---------- grid flyer ---------- */
-.cards{ display:grid; grid-template-columns:1fr 1fr; gap:14px 16px; }
-.hcard{ border:2px solid var(--navy); background:#fff; height:2.4in; display:flex; flex-direction:column; }
-.hcard .ph{ height:1.4in; flex:none; position:relative; }
-.hcard .tag{ position:absolute; left:0; top:10px; background:var(--ribbon-bg); color:var(--ribbon-fg);
-  font-size:6.4pt; font-weight:600; letter-spacing:.18em; text-transform:uppercase; padding:3px 9px; }
-.hcard .bd{ padding:8px 11px; }
-.hcard .row1{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
-.hcard .price{ font-family:'Cormorant Garamond',serif; font-size:17pt; font-weight:600; color:var(--navy);
-  font-feature-settings:'lnum' 1; font-variant-numeric:lining-nums; }
-.hcard .plan{ font-size:6.8pt; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-subtle); }
-.hcard .addr{ font-size:8.6pt; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.hcard .specs{ font-size:7.4pt; color:var(--ink-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-
-/* ---------- single-home flyer ---------- */
-.homehero{ position:absolute; left:0; right:0; top:0; height:5in; }
-.homehero .photo{ position:absolute; inset:0; }
-.homehero .flag{ position:absolute; left:.55in; top:.4in; background:var(--ribbon-bg); color:var(--ribbon-fg);
-  font-size:7pt; font-weight:600; letter-spacing:.24em; text-transform:uppercase; padding:5px 12px; }
-.homehero .logo-chip{ position:absolute; right:.55in; top:.36in; background:#fff; padding:9px 12px; }
-.addrband{ position:absolute; left:0; right:0; top:5in; background:var(--navy); color:#fff;
-  padding:.2in .55in; display:flex; justify-content:space-between; align-items:center; }
-.addrband .price{ font-family:'Cormorant Garamond',serif; font-size:30pt; font-weight:500; color:#fff;
-  font-feature-settings:'lnum' 1; font-variant-numeric:lining-nums; line-height:1; }
-.thumbs{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; height:1.25in; }
-.thumbs > div{ height:1.25in; }
-.fp{ position:absolute; left:.55in; right:.55in; top:1.45in; bottom:1.35in; display:grid; gap:14px; }
-.fp.two{ grid-template-rows:1fr 1fr; }
-.fp > div{ border:1px solid var(--border); padding:8px; min-height:0; }
+/* ================= Inventory list & price sheet (Excel originals) ================= */
+.fx-head{ overflow:hidden; background:#fff; }
+.fx-head .bg{ opacity:.6; filter:saturate(.75); }
+.fx-head .wash{ position:absolute; inset:0; background:rgba(255,255,255,.42); }
+.fx-head .logo{ position:absolute; }
+.fx-head .ttl{ position:absolute; font:600 40pt/1 'EB Garamond',serif; color:var(--navy); white-space:nowrap; }
+.fx-head .sub{ position:absolute; font:11pt/1 'Poppins',sans-serif; color:#000; white-space:nowrap; }
+.fl .hd{ top:166.5pt; font:700 11.5pt/11.5pt 'Carlito',sans-serif; white-space:nowrap; }
+.fl .band{ left:36.5pt; width:535.8pt; height:12.6pt; background:var(--row); }
+.fl .cell{ font:9.8pt/9.8pt 'Carlito',sans-serif; white-space:nowrap; }
+.fl .addr{ font-weight:700; color:var(--ink-x); max-width:128pt; overflow:hidden; text-overflow:ellipsis; }
+.fl .money{ font-weight:700; color:var(--price-x); }
+.fl .strike{ text-decoration:line-through; text-decoration-color:var(--red); text-decoration-thickness:1.6pt; }
+.fl .soldstamp{ font:800 17pt/1 'EB Garamond',serif; color:#e01b1b; letter-spacing:.04em; }
+.fp2 .hd{ top:211.5pt; font:700 13.3pt/16.2pt 'Carlito',sans-serif; white-space:nowrap; }
+.fp2 .band{ left:18.1pt; width:575.1pt; height:15.2pt; background:var(--row); }
+.fp2 .cell{ font:11.4pt/13.9pt 'Carlito',sans-serif; white-space:nowrap; }
+.fp2 .nm{ font-weight:700; color:var(--ink-x); text-transform:uppercase; }
+.fp2 .money{ font-weight:700; color:var(--price-x); }
+.bars-gray{ height:3.7pt; background:var(--gray-x); }
+.bars-navy{ background:var(--navy); }
+.cont{ font:8pt 'Carlito',sans-serif; color:#555; }

@@ -1,69 +1,63 @@
 {% extends "flyers/_base.html" %}
+{# Matches reference/flyers/<Community>/Inventory Flyers/<address>_Inventory_<date>.pdf (Canva, 2 pages). #}
 {% block pages %}
-{% from "partials/logo.html" import logo %}
-{% set page_count = 2 %}{% set mi = h.move_in | move_in(today) %}
-{# ---- page 1: photo + facts ---- #}
-{% set page_no = 1 %}
-<section class="sheet">
-  <div class="homehero">
-    <img class="photo" src="{{ img(h.hero, 8.5) or '/static/placeholder.svg' }}" alt="">
-    {% if mi == READY %}<div class="flag">{{ READY }}</div>{% endif %}
-    <div class="logo-chip">{{ logo(c, "white", 26) }}</div>
-  </div>
-  <div class="addrband on-navy">
-    <div>
-      <div class="eyebrow">{{ c.name }}</div>
-      <h2 style="font-size:19pt">{{ h.address or h.id }}</h2>
-      <div style="font-size:8.5pt;letter-spacing:.12em;text-transform:uppercase;color:var(--navy-200);margin-top:3px">
-        {{ city_line(h.city or c.city, h.state or c.state, h.zip or c.zip) }}</div>
-    </div>
-    <div style="text-align:right">
-      <div class="price">{{ h.price | money }}</div>
-      <div class="eyebrow" style="margin:6px 0 0">{{ plan_label(h.plan) }}</div>
-    </div>
-  </div>
+{% set ct = c.contact %}{% set agent = ct.agents[0] if ct.agents else None %}
+{% set was = bp.was_price(c, h) %}{% set sold = bp.is_sold(c, h) %}
+{% set features = vals.lines('home', h.id, 'features')[:8] %}
+{# ---- page 1 ---- #}
+<section class="sheet fh">
+  <div class="a hero" style="overflow:hidden"><img class="cover" src="{{ img(h.hero, 8.5) or '/static/placeholder.svg' }}" alt=""></div>
+  <div class="a pennant"></div>
+  <img class="a" src="/static/brand/logo-white-wide.png" alt="Sandlin Homes" style="left:29.6pt;top:23.3pt;width:192.7pt;height:37.8pt">
 
-  <div class="inner" style="top:6.12in">
-    <div class="stats" style="grid-template-columns:repeat(5,1fr)">
-      <div><div class="stat-n">{{ h.beds | num }}</div><div class="stat-l">Bedrooms</div></div>
-      <div><div class="stat-n">{{ h.baths | baths(h.half_baths) }}</div><div class="stat-l">Baths</div></div>
-      <div><div class="stat-n">{{ h.sqft | sqft }}</div><div class="stat-l">Sq. Ft.</div></div>
-      <div><div class="stat-n">{{ h.stories | num }}</div><div class="stat-l">Stories</div></div>
-      <div><div class="stat-n">{{ h.garage | num }}</div><div class="stat-l">Car Garage</div></div>
-    </div>
-  </div>
+  <div class="a comm" style="top:236.3pt;font:700 52.2pt/63.2pt 'Cormorant Garamond',serif;white-space:nowrap" data-autofit="30">{{ c.name }}</div>
+  <div class="a comm" style="top:289.4pt;font:19pt/26.6pt 'Poppins',sans-serif">{{ city_line(h.city or c.city, h.state or c.state) }}</div>
 
-  {% set extra = h.photos[1:4] %}
-  <div class="inner" data-fit style="top:7.1in;bottom:1.2in;overflow:hidden;display:grid;grid-template-columns:{{ '1.2fr 1fr' if extra else '1fr' }};gap:20px">
-    <div>
-      <div class="eyebrow">About This Home</div>
-      <p class="clamp muted" style="-webkit-line-clamp:9;font-size:8.6pt;line-height:1.55">{{ h.description | text }}</p>
-      <div class="kv" style="margin-top:6px">
-        <div class="k">Move-In</div><div>{{ mi }}</div>
-      </div>
-    </div>
-    {% if extra %}
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;align-content:start">
-      {% for src in extra %}<div style="height:{{ '2.45in' if extra|length == 1 else '1.18in' }};{{ 'grid-column:1/-1' if loop.first }}"><img class="photo" src="{{ img(src, 3.4 if loop.first else 1.7) }}" alt=""></div>{% endfor %}
-    </div>
-    {% endif %}
-  </div>
-  {% include "partials/foot.html" %}
+  <div class="a band"></div>
+  <div class="a plate"><div class="addr" data-autofit="16">{{ h.address or h.id }}</div></div>
+  {% if sold %}<div class="a sold" style="top:200pt;height:120pt;font-size:70pt">SOLD</div>{% endif %}
+
+  <div class="a stat" style="left:13pt;top:377.8pt;width:120pt"><div class="v">{{ h.sqft | sqft }}</div></div>
+  <div class="a stat" style="left:13pt;top:432pt;width:120pt"><div class="l">SQUARE FEET</div></div>
+  <div class="a stat" style="left:141.4pt;top:377.8pt;width:120pt"><div class="v">{{ h.beds | num }}</div></div>
+  <div class="a stat" style="left:141.4pt;top:432pt;width:120pt"><div class="l">BEDROOMS</div></div>
+  <div class="a stat" style="left:251.6pt;top:377.8pt;width:120pt"><div class="v">{{ h.baths | baths(h.half_baths) }}</div></div>
+  <div class="a stat" style="left:251.6pt;top:432pt;width:120pt"><div class="l">BATHROOMS</div></div>
+  <div class="a stat" style="left:352.5pt;top:377.8pt;width:120pt"><div class="v">{{ h.garage | num }}</div></div>
+  <div class="a stat" style="left:352.5pt;top:432pt;width:120pt"><div class="l">GARAGE</div></div>
+  <div class="a stat" style="left:432pt;top:372.8pt;width:171pt"><div class="v" style="font-size:44pt;line-height:53.3pt">{{ h.price | money }}</div></div>
+  {% if was and h.price and was > h.price %}
+  <div class="a stat" style="left:432pt;top:426.3pt;width:171pt"><div class="v" style="font-size:18pt;line-height:21.8pt">Was {{ was | money }}</div></div>
+  {% endif %}
+  <div class="a slate" style="top:452.9pt"></div>
+
+  <div class="a plan" style="left:24pt;top:494.9pt;width:251pt" data-autofit="16">{{ h.plan | text }}</div>
+  <div class="a feat" data-fit>{% for f in features %}<div>{{ f }}</div>{% endfor %}</div>
+  <div class="a divider"></div>
+
+  <div class="a rc plan" style="top:495.3pt" data-autofit="16">{{ agent or 'Sales Office' }}</div>
+  <div class="a rc" style="top:530.2pt;font:19pt/26.6pt 'Poppins',sans-serif">{{ ct.phone | text }}</div>
+  <div class="a rc" style="top:556.7pt;font:15pt/21pt 'Poppins',sans-serif" data-autofit="10">{{ ct.email | text }}</div>
+  <div class="a rc" style="top:599.2pt;font:18pt/24.7pt 'Poppins',sans-serif" data-autofit="11">{{ (ct.street or c.street) | text }}<br>{{ city_line(ct.city or c.city, ct.state or c.state, ct.zip or c.zip) }}</div>
+
+  <div class="a slate" style="top:714.5pt"></div>
+  <div class="a foot"></div>
+  <div class="a www">www.SandlinHomes.com</div>
+  <img class="a" src="/static/brand/eho-white.png" alt="Equal Housing Opportunity" style="left:561.9pt;top:751.9pt;width:22.5pt;height:24pt">
 </section>
 
-{# ---- page 2: floor plan ---- #}
-{% set page_no = 2 %}
-<section class="sheet">
-  <div class="band slim on-navy">
-    <h2>{{ plan_label(h.plan) if h.plan else 'Floor Plan' }} &middot; {{ h.address or h.id }}</h2>
-    {{ logo(c, "navy", 22) }}
+{# ---- page 2: floor plan(s) ---- #}
+{% set fps = h.floorplans[:2] %}
+<section class="sheet fh">
+  <div class="a fp fp-scale">
+    {% for src in fps %}
+    <figure>
+      <img class="plan-img" src="{{ img(src, 7.4 if fps|length == 1 else 4.6, 9.6, line_art=True) }}" alt="Floor plan">
+      {% if fps|length > 1 %}<figcaption>{{ 'First Floor' if loop.first else 'Second Floor' }}</figcaption>{% endif %}
+    </figure>
+    {% else %}
+    <figure style="flex:1"><img class="contain" src="/static/placeholder.svg" alt=""></figure>
+    {% endfor %}
   </div>
-  {% set fps = h.floorplans[:2] %}
-  <div class="fp {{ 'two' if fps|length > 1 }}">
-    {% for src in fps %}<div><img class="photo contain" src="{{ img(src, 7.4, 8.2 if fps|length == 1 else 4.0, line_art=True) }}" alt="Floor plan"></div>
-    {% else %}<div><img class="photo contain" src="/static/placeholder.svg" alt=""></div>{% endfor %}
-  </div>
-  <div class="inner" style="bottom:1.18in;text-align:center;font-size:8.6pt;color:var(--ink-muted)">{{ h | home_specs }}</div>
-  {% include "partials/foot.html" %}
 </section>
 {% endblock %}

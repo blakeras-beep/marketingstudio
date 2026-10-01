@@ -1,63 +1,58 @@
 {% extends "flyers/_base.html" %}
+{# Matches reference/flyers/<Community>/Community Info/<Community>_Community Information.pdf (Canva). #}
 {% block pages %}
-{% from "partials/logo.html" import logo %}
-{% set page_no, page_count = 1, 1 %}
-{% set sch = c.schools %}{% set ct = c.contact %}
-<section class="sheet">
-  <div class="hero">
-    <img class="photo" src="{{ img(c.hero, 8.5) or '/static/placeholder.svg' }}" alt="">
-    <div class="cap on-navy">
-      <div>
-        <div class="eyebrow">A Sandlin {{ "Signature" if c.tier == "signature" else "Homes" }} Community</div>
-        <h1>{{ c.name }}</h1>
-        <div style="font-size:9pt;letter-spacing:.14em;text-transform:uppercase;color:var(--navy-200);margin-top:6px">
-          {{ city_line(c.city, c.state, c.zip) }}</div>
-      </div>
-      {{ logo(c, "navy", 28) }}
-    </div>
+{% set ct = c.contact %}{% set sch = c.schools %}
+{% set agent = ct.agents[0] if ct.agents else None %}
+{% set hoa = bp.hoa(c) or vals.get('community', cs, 'hoa') %}
+{% set tax = bp.tax_rate(c) or vals.get('community', cs, 'tax_rate') %}
+{% set lot = vals.get('community', cs, 'lot_size') %}
+{% set info_items = [] %}
+{% if hoa %}{% set _ = info_items.append('HOA: ' ~ hoa) %}{% endif %}
+{% if tax %}{% set _ = info_items.append('Tax Rate: ' ~ tax) %}{% endif %}
+{% if lot %}{% set _ = info_items.append('Lot Size: ' ~ lot) %}{% endif %}
+{% if sch.district %}{% set _ = info_items.append(sch.district | isd) %}{% endif %}
+{% set school_items = [sch.elementary, sch.middle, sch.high] | select | list %}
+{% set sections = [('COMMUNITY INFO', info_items), ('SCHOOLS', school_items),
+                   ('UTILITY PROVIDERS', vals.lines('community', cs, 'utilities')),
+                   ('ATTRACTIONS', vals.lines('community', cs, 'attractions'))] %}
+<section class="sheet fi">
+  <div class="a band"></div>
+  <img class="a" src="/static/brand/logo-white-wide.png" alt="Sandlin Homes" style="left:21pt;top:17.6pt;width:205.5pt;height:40.5pt">
+  <div class="a name" data-autofit="28">{{ c.name }}</div>
+  <div class="a subt">{{ city_line(c.city, c.state) }} | Community Info</div>
+  <div class="a stripe" style="top:93pt"></div>
+
+  <div class="a" style="left:0;top:98.4pt;width:612pt;height:246.8pt;overflow:hidden">
+    <img class="cover" src="{{ img(hero, 8.5) or '/static/placeholder.svg' }}" alt="">
+  </div>
+  <div class="a stripe" style="top:345.2pt"></div>
+
+  {% set am = amenities %}
+  {% for x in [9, 133.5, 258] %}
+  <div class="a" style="left:{{ x }}pt;top:361pt;width:118.5pt;height:89.3pt;overflow:hidden">
+    <img class="cover" src="{{ img(am[loop.index0], 1.7) if am|length > loop.index0 else '/static/placeholder.svg' }}" alt="">
+  </div>
+  {% endfor %}
+
+  <div class="a body" data-fit data-drop-paras data-autofit="9.5" data-autofit-h data-autofit-lh="1.4375">
+    {% for para in description %}<p>{{ para }}</p>{% else %}<p>{{ DASH }}</p>{% endfor %}
   </div>
 
-  <div class="inner" style="top:4.35in">
-    <div class="stats" style="margin:0 -.55in;padding:0 .41in">
-      <div><div class="stat-n">{{ c.price_from | money }}</div><div class="stat-l">Priced From</div></div>
-      <div><div class="stat-n" style="font-size:16pt;padding-top:3px">{{ c.sqft_range | sqft_range }}</div><div class="stat-l">Home Sizes</div></div>
-      <div><div class="stat-n">{{ c.plans | length or DASH }}</div><div class="stat-l">Floor Plans</div></div>
-      <div><div class="stat-n">{{ c.homes | length or DASH }}</div><div class="stat-l">Homes Available</div></div>
-    </div>
+  <div class="a side"></div>
+  <div class="a facts" data-fit data-autofit="10" data-autofit-h data-autofit-lh="1.56">
+    {% for title, items in sections if items %}
+    <h4>{{ title }}</h4>
+    <ul>{% for it in items %}<li data-autofit="9">{{ it }}</li>{% endfor %}</ul>
+    {% endfor %}
   </div>
 
-  <div class="inner" style="top:5.35in;bottom:1.25in;display:grid;grid-template-columns:1.45fr 1fr;gap:22px">
-    <div data-fit style="overflow:hidden">
-      <div class="eyebrow">About the Community</div>
-      <h2 style="margin-bottom:10px">Welcome to {{ c.name }}</h2>
-      <p class="clamp muted" style="-webkit-line-clamp:14;font-size:8.8pt;line-height:1.6">{{ c.description | text }}</p>
-      {% if c.driving_directions %}
-      <div class="eyebrow" style="margin-top:12px">Driving Directions</div>
-      <p class="clamp muted" style="-webkit-line-clamp:4;font-size:8pt">{{ c.driving_directions }}</p>
-      {% endif %}
-    </div>
-    <div data-fit style="overflow:hidden">
-      <div class="card">
-        <h3>Schools</h3>
-        <div class="kv">
-          <div class="k">District</div><div>{{ sch.district | text }}</div>
-          <div class="k">Elementary</div><div>{{ sch.elementary | text }}</div>
-          <div class="k">Middle</div><div>{{ sch.middle | text }}</div>
-          <div class="k">High</div><div>{{ sch.high | text }}</div>
-        </div>
-      </div>
-      <div class="card warm">
-        <h3>Visit Our Sales Office</h3>
-        <div class="kv">
-          <div class="k">Address</div><div>{{ (ct.street or c.street) | text }}<br>{{ city_line(ct.city or c.city, ct.state or c.state, ct.zip or c.zip) }}</div>
-          <div class="k">Contact</div><div>{{ ct.agents | join(', ') if ct.agents else DASH }}</div>
-          <div class="k">Phone</div><div>{{ ct.phone | text }}</div>
-          <div class="k">Email</div><div style="word-break:break-all">{{ ct.email | text }}</div>
-          <div class="k">Hours</div><div>{{ ct.hours | text }}</div>
-        </div>
-      </div>
-    </div>
+  <div class="a contact"></div>
+  <div class="a ct" style="left:16.8pt;top:730pt;width:200pt">
+    <b>MODEL ADDRESS</b>{{ (ct.street or c.street) | text }}<br>{{ city_line(ct.city or c.city, ct.state or c.state, ct.zip or c.zip) }}
   </div>
-  {% include "partials/foot.html" %}
+  <div class="a ct r nowrap" style="right:233.5pt;top:730pt;width:200pt" data-autofit="9">
+    <b>{{ (agent or 'Sales Office') | upper }}</b>{{ ct.phone | text }}<br>{{ ct.email | text }}
+  </div>
+  <img class="a" src="/static/brand/eho-white.png" alt="Equal Housing Opportunity" style="left:557.1pt;top:732.1pt;width:34.5pt;height:36.7pt">
 </section>
 {% endblock %}

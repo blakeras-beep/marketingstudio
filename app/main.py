@@ -11,7 +11,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 
-from . import accounts, auth, bdx, db, edit, images, inputs, store
+from . import accounts, auth, bdx, blueprint, db, edit, images, inputs, store
 from .web import templates
 from .flyers import (
     COMMUNITY_FLYERS, FLYERS_BY_KEY, HOME_FLYER, GRID_CARDS, PLAN_ROWS, PRICING_ROWS,
@@ -69,6 +69,15 @@ def _community_or_404(slug: str) -> bdx.Community:
             raise HTTPException(503, f"BDX feed unavailable: {st.error}")
         raise HTTPException(404, f"No community '{slug}' in the BDX feed")
     return c
+
+
+def _flyer_ctx(c: bdx.Community) -> dict:
+    """Everything a flyer reads besides the feed: marketing inputs and Blueprint."""
+    vals = inputs.load()
+    hero, amenities = inputs.community_photos(c, vals)
+    return {"vals": vals, "cs": inputs.community_subject(c), "bp": blueprint.current(),
+            "hero": hero, "amenities": amenities, "description": inputs.description(c, vals),
+            "plan_subject": lambda p: inputs.plan_subject(c, p.name or "")}
 
 
 def _doc_title(c: bdx.Community, name: str) -> str:
@@ -203,7 +212,7 @@ def home_flyer(request: Request, slug: str, home: str):
     return templates.TemplateResponse(request, HOME_FLYER.template, {
         "c": c, "h": h, "flyer": HOME_FLYER, "today": date.today(),
         "doc_title": _doc_title(c, h.address or h.id),
-        "back": f"/c/{c.slug}",
+        "back": f"/c/{c.slug}", **_flyer_ctx(c),
     })
 
 
@@ -217,7 +226,7 @@ def community_flyer(request: Request, slug: str, key: str):
     if reason:
         raise HTTPException(409, f"{f.title} unavailable for {c.name}: {reason}")
     ctx = {"c": c, "flyer": f, "today": date.today(),
-           "doc_title": _doc_title(c, f.title), "back": f"/c/{c.slug}"}
+           "doc_title": _doc_title(c, f.title), "back": f"/c/{c.slug}", **_flyer_ctx(c)}
     if key == "pricing":
         ctx["pages"] = paginate(sorted_homes(c), *PRICING_ROWS)
     elif key == "plans":

@@ -1,41 +1,53 @@
 {% extends "flyers/_base.html" %}
+{# Matches reference/flyers/<Community>/Inventory List/<Community> inventory list <date>.pdf (Excel). #}
 {% block pages %}
-{% set page_count = pages | length %}
+{% set ct = c.contact %}{% set agent = ct.agents[0] if ct.agents else None %}
+{% set cols = [('SQ. FT', 182.5), ('STORIES', 240.7), ('BEDS', 299), ('BATHS', 350.5), ('PLAN', 404.5), ('OLD PRICE', 467.1), ('PRICE', 535.6)] %}
 {% for rows in pages %}
-{% set page_no = loop.index %}{% set loop_first = loop.first %}
-{% set eyebrow = "Available Homes" %}{% set effective = "Pricing Effective" %}
-<section class="sheet">
-  {% include "partials/band.html" %}
-  <div class="inner" data-fit style="top:{{ '2.05in' if loop.first else '1.05in' }};bottom:1.2in;overflow:hidden">
-    <table class="ledger">
-      <colgroup>
-        <col style="width:23%"><col style="width:15%"><col style="width:7%"><col style="width:7%">
-        <col style="width:9%"><col style="width:7%"><col style="width:7%"><col style="width:13%"><col style="width:12%">
-      </colgroup>
-      <thead><tr>
-        <th>Address</th><th>Plan</th><th class="c">Beds</th><th class="c">Baths</th>
-        <th class="r">Sq. Ft.</th><th class="c">Story</th><th class="c">Garage</th><th>Move-In</th><th class="r">Price</th>
-      </tr></thead>
-      <tbody>
-      {% for h in rows %}
-        <tr>
-          <td class="addr">{{ h.address or h.id }}</td>
-          <td>{{ h.plan | text }}</td>
-          <td class="c">{{ h.beds | num }}</td>
-          <td class="c">{{ h.baths | baths(h.half_baths) }}</td>
-          <td class="r">{{ h.sqft | sqft }}</td>
-          <td class="c">{{ h.stories | num }}</td>
-          <td class="c">{{ h.garage | num }}</td>
-          {% set mi = h.move_in | move_in(today) %}
-          <td class="{{ 'ready' if mi == READY }}">{{ mi }}</td>
-          <td class="r price">{{ h.price | money }}</td>
-        </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-    {% if not loop.last %}<div class="cont">Continued on next page</div>{% endif %}
+<section class="sheet fl">
+  <div class="a fx-head" style="left:36pt;top:28.8pt;width:534.5pt;height:135pt">
+    <img class="cover bg" src="{{ img(hero, 7.5) or '/static/placeholder.svg' }}" alt="">
+    <div class="wash"></div>
+    <img class="logo" src="/static/logo-navy.png" alt="Sandlin Homes" style="left:31.5pt;top:20.7pt;height:33pt">
+    <div class="ttl" style="left:31.5pt;top:62pt;font-size:36pt" data-autofit="22">{{ c.name }}</div>
+    <div class="sub" style="left:31.5pt;top:104pt">Quick Move-In Homes&nbsp; | &nbsp;{{ city_line(c.city, c.state) }}</div>
   </div>
-  {% include "partials/foot.html" %}
+
+  <div class="a hd" style="left:50.7pt">HOME</div>
+  {% for label, x in cols %}<div class="a hd c" style="left:{{ x - 40 }}pt;width:80pt">{{ label }}</div>{% endfor %}
+
+  {% for h in rows %}
+  {% set y = 178.7 + loop.index0 * 28.3 %}{% set was = bp.was_price(c, h) %}
+  <div class="a band" style="top:{{ y }}pt"></div>
+  <div class="a cell addr" style="left:38.3pt;top:{{ y + 2.3 }}pt">{{ h.address or h.id }}</div>
+  {% if bp.is_sold(c, h) %}<div class="a soldstamp" style="left:56pt;top:{{ y - 3 }}pt">SOLD</div>{% endif %}
+  <div class="a cell c" style="left:142.5pt;width:80pt;top:{{ y + 2.3 }}pt">{{ h.sqft | sqft }}</div>
+  <div class="a cell c" style="left:200.7pt;width:80pt;top:{{ y + 2.3 }}pt">{{ h.stories | num }}</div>
+  <div class="a cell c" style="left:259pt;width:80pt;top:{{ y + 2.3 }}pt">{{ h.beds | num }}</div>
+  <div class="a cell c" style="left:310.5pt;width:80pt;top:{{ y + 2.3 }}pt">{{ h.baths | baths(h.half_baths) }}</div>
+  <div class="a cell c" style="left:364.5pt;width:80pt;top:{{ y + 2.3 }}pt;overflow:hidden">{{ h.plan | text }}</div>
+  {% if was and h.price and was > h.price %}
+  <div class="a cell c money strike" style="left:427.1pt;width:80pt;top:{{ y + 2.3 }}pt">{{ was | money }}</div>
+  {% endif %}
+  <div class="a cell c money" style="left:495.6pt;width:80pt;top:{{ y + 2.3 }}pt">{{ h.price | money }}</div>
+  {% endfor %}
+
+  {% if not loop.last %}
+  <div class="a cont r" style="right:40pt;top:{{ 178.7 + rows|length * 28.3 }}pt">Continued on next page</div>
+  {% else %}
+  <div class="a xl r" style="right:46.5pt;top:605.8pt;font-size:9pt">Effective {{ today.strftime('%m.%d.%y') }}</div>
+  <div class="a xl c" style="left:56pt;width:500pt;top:619.8pt;font-size:6.6pt;line-height:8pt">
+    All discounts and/or incentives are subject to credit approval and use of builder's preferred lender and title company. Floorplans and renderings are artist's conceptions. Dimensions
+    are approximate. Floor plans, room sizes, exteriors, and standard features may vary. Sandlin Homes reserves the right to modify the plan and specifications without notice or
+    obligation. Copyright {{ today.year }} Sandlin Homes - All rights Reserved</div>
+  <div class="a xl c" style="left:0;width:612pt;top:644pt;font-size:9.8pt">For More Information:</div>
+  <div class="a eb c" style="left:0;width:612pt;top:655pt;font:600 22.9pt/26pt 'EB Garamond',serif;color:var(--price-x)">{{ agent or 'Sales Office' }}</div>
+  <div class="a xl c" style="left:0;width:612pt;top:683.3pt;font:700 11.5pt/11.5pt 'Carlito',sans-serif;color:var(--navy)">COMMUNITY SALES MANAGER</div>
+  <div class="a xl c" style="left:0;width:612pt;top:696.8pt;font:700 9pt/9pt 'Carlito',sans-serif;color:var(--navy);white-space:pre">{{ ct.phone | phone_paren }}   l   {{ (ct.email or '') | lower }}</div>
+  {% endif %}
+  <img class="a" src="/static/brand/eho-black.png" alt="Equal Housing Opportunity" style="left:49.8pt;top:671.2pt;width:24pt;height:25.4pt">
+  <div class="a bars-gray" style="left:36.5pt;top:722.4pt;width:535.8pt"></div>
+  <div class="a bars-navy" style="left:36.5pt;top:726pt;width:535.8pt;height:10.8pt"></div>
 </section>
 {% endfor %}
 {% endblock %}

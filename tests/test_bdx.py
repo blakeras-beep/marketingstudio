@@ -59,7 +59,7 @@ class ParseTest(unittest.TestCase):
 
     def test_contact_and_address(self):
         self.assertEqual(self.c.contact.agents, ["Agent A", "Agent B"])
-        self.assertEqual(self.c.contact.phone, "000.000.0000")
+        self.assertEqual(self.c.contact.phone, "000-000-0000")
         self.assertEqual((self.c.city, self.c.state, self.c.zip), ("City", "ST", "00000"))
 
     def test_schools_type_attribute_form(self):

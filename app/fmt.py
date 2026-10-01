@@ -83,7 +83,25 @@ def status(s) -> str:
     return re.sub(r"(?<=[a-z])(?=[A-Z])", " ", s) if s else DASH
 
 
+def phone_paren(p) -> str:
+    """'972-723-8778' -> '(972) 723-8778' (the Excel sheets' style)."""
+    d = re.sub(r"\D", "", p or "")
+    return f"({d[:3]}) {d[3:6]}-{d[6:10]}" if len(d) >= 10 else (p or DASH)
+
+
+def range_or(rng, value_fmt) -> str:
+    """A marketing-entered range ('3 - 4') if there is one, else the feed's single value."""
+    return rng if rng else value_fmt
+
+
+def isd(name) -> str:
+    """'Denton Independent School District' -> 'Denton ISD' (how the flyers print it)."""
+    return re.sub(r"\s*Independent School District\b", " ISD", name or "").strip() or DASH
+
+
 FILTERS = {
+    "isd": isd,
+    "phone_paren": phone_paren,
     "status": status,
     "money": money,
     "num": num,

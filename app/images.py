@@ -48,8 +48,23 @@ def src(url: str | None, width_in: float, height_in: float | None = None,
     return q
 
 
+# Bump when render() output changes so stored copies (R2) are regenerated, not reused.
+CACHE_VERSION = 2   # 2: floor plans trimmed of white margins
+
+
 def cache_key(url: str, w: int, h: int | None, la: bool) -> str:
-    return hashlib.sha1(f"{url}|{w}|{h}|{int(la)}".encode()).hexdigest() + ".jpg"
+    return hashlib.sha1(f"v{CACHE_VERSION}|{url}|{w}|{h}|{int(la)}".encode()).hexdigest() + ".jpg"
+
+
+def _trim_white(im: Image.Image, margin: float = 0.015) -> Image.Image:
+    """Crop the white canvas around line art (floor plans arrive on oversized white pages).
+    Scale is untouched, so two floors from the same plan set stay comparable."""
+    ink = im.convert("L").point(lambda v: 255 if v < 235 else 0)
+    box = ink.getbbox()
+    if not box:
+        return im
+    m = int(max(im.size) * margin)
+    return im.crop((max(0, box[0] - m), max(0, box[1] - m), min(im.width, box[2] + m), min(im.height, box[3] + m)))
 
 
 def render(url: str, w: int, h: int | None = None, la: bool = False) -> bytes:
@@ -63,7 +78,7 @@ def render(url: str, w: int, h: int | None = None, la: bool = False) -> bytes:
     im = Image.open(io.BytesIO(data))
     # Already at or under print size: a JPEG is served byte-for-byte, since
     # re-encoding would only lose quality.
-    if im.format == "JPEG" and im.width <= w and (h is None or im.height <= h):
+    if not la and im.format == "JPEG" and im.width <= w and (h is None or im.height <= h):
         return data
 
     icc = im.info.get("icc_profile")  # keep the photo's color space
@@ -82,6 +97,9 @@ def render(url: str, w: int, h: int | None = None, la: bool = False) -> bytes:
     if scale < 1.0:
         im = im.resize((max(1, round(im.width * scale)), max(1, round(im.height * scale))),
                        Image.LANCZOS)
+
+    if la:
+        im = _trim_white(im)
 
     out = io.BytesIO()
     im.save(out, "JPEG", quality=90 if la else 85, optimize=True, progressive=True,

@@ -277,7 +277,7 @@ def _phone(el) -> str | None:
         return None
     ac, pre, suf = _t(el, "AreaCode"), _t(el, "Prefix"), _t(el, "Suffix")
     if ac and pre and suf:
-        s = f"{ac}.{pre}.{suf}"
+        s = f"{ac}-{pre}-{suf}"
         ext = _t(el, "Extension")
         return f"{s} x{ext}" if ext else s
     raw = _txt(el)
@@ -285,7 +285,7 @@ def _phone(el) -> str | None:
     if len(digits) == 11 and digits.startswith("1"):
         digits = digits[1:]
     if len(digits) == 10:
-        return f"{digits[:3]}.{digits[3:6]}.{digits[6:]}"
+        return f"{digits[:3]}-{digits[3:6]}-{digits[6:]}"
     return raw
 
 

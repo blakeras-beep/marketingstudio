@@ -65,3 +65,12 @@ form.inline input{ min-width:140px; }
 .muted{ color:var(--ink-subtle); font-weight:400; }
 tr.off td{ opacity:.55; }
 button.btn{ cursor:pointer; }
+.picker{ border:1px solid var(--border); border-radius:6px; padding:12px; }
+.picker legend{ font-size:11px; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:var(--navy); padding:0 4px; }
+.thumbs{ display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:8px; margin-top:8px; max-height:360px; overflow:auto; }
+.thumb{ position:relative; display:block; cursor:pointer; text-transform:none; letter-spacing:0; font-weight:400; }
+.thumb img{ width:100%; aspect-ratio:3/2; object-fit:cover; border-radius:4px; border:3px solid transparent; }
+.thumb input{ position:absolute; top:6px; left:6px; width:auto; }
+.thumb input:checked + img{ border-color:var(--navy); }
+.thumb.none{ display:flex; gap:8px; align-items:center; margin-top:8px; font-size:13px; }
+.thumb.none input{ position:static; }

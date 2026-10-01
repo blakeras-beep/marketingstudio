@@ -45,8 +45,14 @@ async def save_community(request: Request, slug: str):
     user = auth.require(request, *EDITORS)
     c = _community(slug)
     form = await request.form()
-    n = inputs.save("community", inputs.community_subject(c),
-                    {f.key: form.get(f.key, "") for f in inputs.COMMUNITY_FIELDS}, user["id"])
+    values = {}
+    for f in inputs.COMMUNITY_FIELDS:
+        if f.kind in ("photo", "photos"):   # only photos that are in this community's feed
+            picked = [u for u in form.getlist(f.key) if u in c.photos]
+            values[f.key] = "\n".join(picked[:1] if f.kind == "photo" else picked[:3])
+        else:
+            values[f.key] = form.get(f.key, "")
+    n = inputs.save("community", inputs.community_subject(c), values, user["id"])
     return _done(c.slug, "community", n)
 
 

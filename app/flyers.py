@@ -33,28 +33,28 @@ COMMUNITY_FLYERS: list[Flyer] = [
     Flyer("info", "Community Info Sheet",
           "Overview, schools, price range and sales office.",
           "flyers/info.html", lambda c: None),
-    Flyer("pricing", "Inventory Pricing Sheet",
+    Flyer("pricing", "Inventory List",
           "Every available home with plan, specs, price and move-in.",
           "flyers/pricing.html", _needs_homes),
-    Flyer("plans", "Floor Plans Sheet",
+    Flyer("plans", "Price Sheet",
           "Every plan with specs and starting price.",
           "flyers/plans.html", _needs_plans),
-    Flyer("grid", "Inventory Grid Flyer",
+    Flyer("grid", "Photo Inventory",
           "Photo cards for every available home.",
           "flyers/grid.html", _needs_homes),
 ]
 FLYERS_BY_KEY = {f.key: f for f in COMMUNITY_FLYERS}
 
-HOME_FLYER = Flyer("home", "Single-Home Flyer",
+HOME_FLYER = Flyer("home", "Inventory Flyer",
                    "Two pages: photo and facts, then floor plan.",
                    "flyers/home.html", lambda c: None)
 
 # Rows per printed page. The first page carries the community header, so it
 # holds fewer. Rows are single-line and fixed-height, which keeps these exact;
 # the page template flags any sheet that still overflows.
-PRICING_ROWS = (25, 29)
-PLAN_ROWS = (25, 29)
-GRID_CARDS = (6, 6)
+PRICING_ROWS = (15, 15)   # inventory list: rows the Excel original fits above its footer
+PLAN_ROWS = (12, 12)      # price sheet
+GRID_CARDS = (10, 10)     # photo inventory: 2 columns x 5 rows
 
 
 def paginate(rows: list, first: int, rest: int) -> list[list]:
@@ -75,4 +75,5 @@ def sorted_homes(c: Community) -> list[Home]:
 
 
 def sorted_plans(c: Community) -> list[Plan]:
-    return sorted(c.plans, key=lambda p: (p.sqft is None, p.sqft or 0, p.name or ""))
+    """Cheapest first, like the price sheets (plans without a price last, by size)."""
+    return sorted(c.plans, key=lambda p: (_price_key(p.price_from), p.sqft or 0, p.name or ""))

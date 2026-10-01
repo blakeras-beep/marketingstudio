@@ -1,29 +1,45 @@
 {% extends "flyers/_base.html" %}
+{# Matches reference/flyers/<Community>/Inventory Flyers/<Community> Photo Inventory_<date>.pdf (Canva). #}
 {% block pages %}
-{% set page_count = pages | length %}
+{% set ct = c.contact %}{% set agent = ct.agents[0] if ct.agents else None %}
 {% for cards in pages %}
-{% set page_no = loop.index %}{% set loop_first = loop.first %}
-{% set eyebrow = "Quick Move-In Homes" %}{% set effective = "Pricing Effective" %}
-<section class="sheet">
-  {% include "partials/band.html" %}
-  <div class="inner cards" data-fit style="top:{{ '2.15in' if loop.first else '1.15in' }};bottom:1.2in;overflow:hidden;align-content:start">
-    {% for h in cards %}
-    {% set mi = h.move_in | move_in(today) %}
-    <div class="hcard">
-      <div class="ph">
-        <img class="photo" src="{{ img(h.hero, 3.7) or '/static/placeholder.svg' }}" alt="">
-        {% if mi == READY %}<div class="tag">{{ READY }}</div>{% endif %}
-      </div>
-      <div class="bd">
-        <div class="row1"><div class="price">{{ h.price | money }}</div><div class="plan">{{ h.plan | text }}</div></div>
-        <div class="addr">{{ h.address or h.id }}</div>
-        <div class="specs">{{ h | home_specs }}</div>
-        {% if mi != READY %}<div class="specs">Move-in: {{ mi }}</div>{% endif %}
-      </div>
+<section class="sheet fg">
+  <div class="a head"><img class="cover" src="{{ img(hero, 8.5) or '/static/placeholder.svg' }}" alt=""></div>
+  <img class="a" src="/static/brand/logo-white-stacked.png" alt="Sandlin Homes" style="left:22.4pt;top:27.9pt;width:140.2pt;height:99pt">
+  <div class="a t1" data-autofit="28">{{ c.name }}</div>
+  <div class="a t2">{{ city_line(c.city, c.state) }}</div>
+  <div class="a t3">Move-In Ready Homes</div>
+
+  {% for h in cards %}
+  {% set col, row = loop.index0 % 2, loop.index0 // 2 %}
+  {% set was = bp.was_price(c, h) %}
+  <div class="a card" style="left:{{ 7.4 if col == 0 else 308.8 }}pt;top:{{ 166.4 + row * 112.8 }}pt">
+    <div class="a ph">
+      <img class="cover" src="{{ img(h.hero, 1.9) or '/static/placeholder.svg' }}" alt="">
+      {% if bp.is_sold(c, h) %}<div class="sold" style="font-size:30pt">SOLD</div>{% endif %}
     </div>
-    {% endfor %}
+    <div class="a ad" data-autofit="8">{{ h.address or h.id }}</div>
+    <img class="a ic" src="/static/brand/icon-sqft.png" alt="" style="top:22.8pt;height:17.5pt">
+    <img class="a ic" src="/static/brand/icon-bed.png" alt="" style="top:44.8pt;height:16pt">
+    <img class="a ic" src="/static/brand/icon-bath.png" alt="" style="top:62.8pt;height:12pt">
+    <img class="a ic" src="/static/brand/icon-garage.png" alt="" style="top:82.8pt;height:15pt">
+    <div class="a sp" style="top:26.8pt">{{ h.sqft or DASH }} Sq. Ft.</div>
+    <div class="a sp" style="top:46.5pt">{{ h.beds | num }} Bedrooms</div>
+    <div class="a sp" style="top:66pt">{{ h.baths | baths(h.half_baths) }} Bathrooms</div>
+    <div class="a sp" style="top:84pt">{{ h.garage | num }} Car Garage</div>
+    <div class="a pr">{{ h.price | money }}</div>
+    {% if was and h.price and was > h.price %}<div class="a was">Was {{ was | money }}</div>{% endif %}
+    {% if h.plan %}<div class="a pl" data-autofit="6">The {{ h.plan }}</div>{% endif %}
   </div>
-  {% include "partials/foot.html" %}
+  {% endfor %}
+
+  <div class="a foot"></div>
+  <svg class="a" viewBox="0 0 24 24" style="left:10.7pt;top:754.2pt;width:19.6pt;height:19.6pt" fill="none" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2z"/></svg>
+  <div class="a fx" style="left:33.6pt">{{ ct.phone | text }}</div>
+  <div class="a fx" style="left:169.4pt">{{ agent or '' }}</div>
+  <svg class="a" viewBox="0 0 24 17" style="left:313.7pt;top:757pt;width:19.7pt;height:14.1pt" fill="none" stroke="#fff" stroke-width="1.5"><rect x="1" y="1" width="22" height="15" rx="1"/><path d="M1 1l11 8 11-8"/></svg>
+  <div class="a fx" style="left:335.9pt;width:236pt;overflow:hidden" data-autofit="10">{{ ct.email | text }}</div>
+  <img class="a" src="/static/brand/eho-white.png" alt="Equal Housing Opportunity" style="left:576.5pt;top:750.5pt;width:26.2pt;height:28.5pt">
 </section>
 {% endfor %}
 {% endblock %}

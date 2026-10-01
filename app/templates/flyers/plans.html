@@ -1,39 +1,45 @@
 {% extends "flyers/_base.html" %}
+{# Matches reference/flyers/<Community>/Pricing/<Community> Price Sheet <date>.pdf (Excel, "Available Floor Plans"). #}
 {% block pages %}
-{% set page_count = pages | length %}
+{% set ct = c.contact %}{% set agent = ct.agents[0] if ct.agents else None %}
 {% for rows in pages %}
-{% set page_no = loop.index %}{% set loop_first = loop.first %}
-{% set eyebrow = "Floor Plans" %}{% set effective = "Pricing Effective" %}
-<section class="sheet">
-  {% include "partials/band.html" %}
-  <div class="inner" data-fit style="top:{{ '2.05in' if loop.first else '1.05in' }};bottom:1.2in;overflow:hidden">
-    <table class="ledger">
-      <colgroup>
-        <col style="width:26%"><col style="width:11%"><col style="width:8%"><col style="width:8%">
-        <col style="width:8%"><col style="width:9%"><col style="width:12%"><col style="width:18%">
-      </colgroup>
-      <thead><tr>
-        <th>Plan</th><th class="r">Sq. Ft.</th><th class="c">Beds</th><th class="c">Baths</th>
-        <th class="c">Story</th><th class="c">Garage</th><th class="c">Available</th><th class="r">Priced From</th>
-      </tr></thead>
-      <tbody>
-      {% for p in rows %}
-        <tr>
-          <td class="addr">{{ p.name | text }}</td>
-          <td class="r">{{ p.sqft | sqft }}</td>
-          <td class="c">{{ p.beds | num }}</td>
-          <td class="c">{{ p.baths | baths(p.half_baths) }}</td>
-          <td class="c">{{ p.stories | num }}</td>
-          <td class="c">{{ p.garage | num }}</td>
-          <td class="c">{{ p.homes_available or DASH }}</td>
-          <td class="r price">{{ p.price_from | money }}</td>
-        </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-    {% if not loop.last %}<div class="cont">Continued on next page</div>{% endif %}
+<section class="sheet fp2">
+  <div class="a fx-head" style="left:17.6pt;top:36pt;width:573.2pt;height:157.8pt">
+    <img class="cover bg" src="{{ img(hero, 8) or '/static/placeholder.svg' }}" alt="">
+    <div class="wash"></div>
+    <img class="logo" src="/static/logo-navy.png" alt="Sandlin Homes" style="left:32.8pt;top:25.2pt;height:36pt">
+    <div class="ttl" style="left:32.8pt;top:75pt;font-size:42pt" data-autofit="24">{{ c.name }}</div>
+    <div class="sub" style="left:32.8pt;top:121pt;font-size:12pt">Available Floor Plans</div>
   </div>
-  {% include "partials/foot.html" %}
+
+  {% for label, x in [('SQ. FT', 210.7), ('STORIES', 280), ('BEDS', 348.9), ('BATHS', 419), ('STARTING FROM', 535.3)] %}
+  <div class="a hd c" style="left:{{ x - 50 }}pt;width:100pt">{{ label }}</div>
+  {% endfor %}
+
+  {% for p in rows %}
+  {% set y = 228.3 + loop.index0 * 29.65 %}{% set ps = plan_subject(p) %}
+  <div class="a band" style="top:{{ y }}pt"></div>
+  <div class="a cell nm" style="left:20.1pt;top:{{ y + 0.9 }}pt;max-width:160pt;overflow:hidden">{{ p.name | text }}</div>
+  <div class="a cell c" style="left:160.7pt;width:100pt;top:{{ y + 0.9 }}pt">{{ p.sqft | sqft }}</div>
+  <div class="a cell c" style="left:230pt;width:100pt;top:{{ y + 0.9 }}pt">{{ p.stories | num }}</div>
+  <div class="a cell c" style="left:298.9pt;width:100pt;top:{{ y + 0.9 }}pt">{{ vals.get('plan', ps, 'beds_range') or (p.beds | num) }}</div>
+  <div class="a cell c" style="left:369pt;width:100pt;top:{{ y + 0.9 }}pt">{{ vals.get('plan', ps, 'baths_range') or (p.baths | baths(p.half_baths)) }}</div>
+  <div class="a cell c money" style="left:483.6pt;width:100pt;top:{{ y + 0.9 }}pt">{{ p.price_from | money }}</div>
+  {% endfor %}
+
+  {% if not loop.last %}
+  <div class="a cont r" style="right:22pt;top:{{ 228.3 + rows|length * 29.65 }}pt">Continued on next page</div>
+  {% else %}
+  <div class="a cell" style="left:20.1pt;top:585pt;font-weight:700;color:var(--ink-x)">For More Information:</div>
+  <div class="a cell" style="right:42.5pt;top:587.7pt;font-size:8.5pt">Effective: {{ today.month }}/{{ today.day }}/{{ today.year }}</div>
+  <div class="a cell" style="left:20.1pt;top:600.1pt;color:var(--ink-x)">{{ agent or 'Sales Office' }}</div>
+  <div class="a cell" style="left:20.1pt;top:615.2pt;color:var(--ink-x)">Community Sales Manager</div>
+  <div class="a cell" style="left:20.1pt;top:630.3pt;color:var(--ink-x);white-space:pre">{{ ct.phone | phone_paren }}   |   {{ (ct.email or '') | lower }}</div>
+  <div class="a cell" style="left:19.7pt;top:654.6pt;width:552pt;white-space:normal;font-size:8.5pt;line-height:12.13pt;color:#808080">All discounts and incentives are subject to credit approval and use of builder's preferred lender and title company. Floor plans and renderings are conceptual representations. Dimensions and square footages are approximate and may vary by elevation. Floor plans, room sizes, exteriors, and standard features may vary. Photographs may depict upgraded features not included in the base price. All homes subject to prior sale. Sandlin Homes reserves the right to modify plans, pricing, specifications, and availability without notice or obligation. Copyright © {{ today.year }} Sandlin Homes – All Rights Reserved.</div>
+  {% endif %}
+  <img class="a" src="/static/brand/eho-black.png" alt="Equal Housing Opportunity" style="left:550pt;top:604pt;width:24pt;height:25.4pt">
+  <div class="a bars-gray" style="left:18.1pt;top:717pt;width:575.1pt;height:4.4pt"></div>
+  <div class="a bars-navy" style="left:18.1pt;top:721.3pt;width:575.1pt;height:15.3pt"></div>
 </section>
 {% endfor %}
 {% endblock %}
