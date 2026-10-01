@@ -102,6 +102,10 @@ Resized photos are stored in **Cloudflare R2** (`app/store.py`), never on local
 disk. They're a cache: deleting them only means each photo is resized again the
 next time a flyer needs it. Without R2 settings (local dev) the app keeps them
 in a byte-capped in-memory cache instead. `/healthz` reports which is active.
+The store is best-effort: if R2 errors (bad key, wrong bucket), photos are still
+resized and served directly and the error is logged. `/healthz/images` runs the
+pipeline step by step (feed photo fetch and resize, store write, store read)
+and prints the exact error at whichever step fails.
 
 Measured on the live feed: single-home flyers median 572 KB (max 1.1 MB),
 grid flyers median 645 KB (max 1.2 MB), info sheets ~500 KB.

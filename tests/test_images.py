@@ -121,13 +121,28 @@ class R2Test(unittest.TestCase):
         self.assertEqual(r.status_code, 302)
         self.assertEqual(r.headers["location"], "https://img.example.com/" + self.key)
 
-    def test_store_failure_shows_placeholder_path(self):
+    def test_store_failure_still_serves_photo(self):
+        # R2 is a cache: a bad key or bucket must never cost the flyer its photos.
         r2, stub, patches = _r2()
         stub.add_client_error("get_object", "AccessDenied", http_status_code=403)
-        with stub:
-            r = self._serve(r2, _jpeg(10, 10))
+        stub.add_client_error("put_object", "AccessDenied", http_status_code=403)
+        with stub, self.assertLogs("marketingstudio", "ERROR"):
+            r = self._serve(r2, _jpeg(3000, 2000))
         [p.stop() for p in patches]
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(Image.open(io.BytesIO(r.content)).size, (1000, 667))
+
+    def test_source_failure_is_502(self):
+        with mock.patch.object(store, "_store", store.MemoryStore(1 << 20)), \
+                mock.patch("urllib.request.urlopen", side_effect=OSError("unreachable")):
+            r = self.client.get(self.url)
         self.assertEqual(r.status_code, 502)
+
+    def test_r2_client_sends_checksums_only_when_required(self):
+        with mock.patch.object(store, "R2_ACCOUNT_ID", "acct"):
+            cfg = store.R2Store().client.meta.config
+        self.assertEqual(cfg.request_checksum_calculation, "when_required")
+        self.assertEqual(cfg.response_checksum_validation, "when_required")
 
 
 if __name__ == "__main__":

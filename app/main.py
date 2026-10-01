@@ -1,6 +1,8 @@
 """Sandlin Marketing Studio — community collateral rendered live from the BDX feed."""
 from __future__ import annotations
 
+import logging
+
 from datetime import date, datetime, timezone
 from pathlib import Path
 
@@ -16,6 +18,8 @@ from .flyers import (
 )
 
 HERE = Path(__file__).parent
+log = logging.getLogger("marketingstudio")
+logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 app = FastAPI(title="Sandlin Marketing Studio", docs_url=None, redoc_url=None)
 app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
 templates = Jinja2Templates(directory=HERE / "templates")
@@ -53,21 +57,67 @@ def image(u: str, w: int, h: int | None = None, la: int = 0):
     """Feed photo downsampled to print size (see app/images.py)."""
     if not images.allowed(u) or not (16 <= w <= 4000) or (h is not None and not 16 <= h <= 4000):
         raise HTTPException(400, "Image not allowed")
+    # The store is a cache: if it fails, the photo is still rendered and served,
+    # and the failure is logged. Only an unreachable/corrupt source fails the
+    # image (the page then shows placeholder art).
     st, key = store.get_store(), images.cache_key(u, w, h, bool(la))
     public = st.public_url(key)
     try:
         if public and st.exists(key):
             return RedirectResponse(public, status_code=302)
         data = None if public else st.get(key)
-        if data is None:
+    except Exception:
+        log.exception("image store read failed (%s); rendering directly", st.name)
+        data, public = None, None
+    if data is None:
+        try:
             data = images.render(u, w, h, bool(la))
+        except Exception as e:
+            log.warning("image source failed: %s: %s (%s)", type(e).__name__, e, u)
+            raise HTTPException(502, f"Image unavailable: {type(e).__name__}")
+        try:
             st.put(key, data)
             if public:
                 return RedirectResponse(public, status_code=302)
-    except Exception as e:  # unreachable/corrupt source or store: placeholder art shows
-        raise HTTPException(502, f"Image unavailable: {type(e).__name__}")
+        except Exception:
+            log.exception("image store write failed (%s); serving directly", st.name)
     return Response(data, media_type="image/jpeg",
                     headers={"Cache-Control": "public, max-age=604800"})
+
+
+@app.get("/healthz/images")
+def healthz_images():
+    """Step-by-step image pipeline check: feed photo fetch, resize, store write/read.
+
+    Reports the exact error at each step so a misconfigured R2 setting is obvious.
+    """
+    out: dict = {"store": store.get_store().name, "r2_configured": store.r2_configured(),
+                 "r2_bucket": store.R2_BUCKET or None, "r2_public_url": store.R2_PUBLIC_URL or None}
+    cs = bdx.state().communities
+    url = next((x for c in cs for x in [c.hero] if x and images.allowed(x)), None)
+    out["sample"] = url
+
+    def step(name, fn):
+        try:
+            res = fn()
+            out[name] = "ok" if res is None else res
+            return res if res is not None else True
+        except Exception as e:
+            out[name] = f"FAILED {type(e).__name__}: {e}"
+            return None
+
+    if not url:
+        out["fetch_and_resize"] = "FAILED: no feed photo found (is the feed loading?)"
+        return JSONResponse(out, status_code=503)
+    data = step("fetch_and_resize", lambda: images.render(url, 400))
+    if isinstance(data, bytes):
+        out["fetch_and_resize"] = f"ok ({len(data)} bytes)"
+        st, key = store.get_store(), "healthcheck-" + images.cache_key(url, 400, None, False)
+        step("store_write", lambda: st.put(key, data))
+        step("store_read", lambda: "ok" if st.get(key) == data else "FAILED: read back different bytes")
+    ok = all(str(v).startswith("ok") for k, v in out.items() if k in
+             ("fetch_and_resize", "store_write", "store_read"))
+    return JSONResponse(out, status_code=200 if ok else 503)
 
 
 @app.get("/livez")

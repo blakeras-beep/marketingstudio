@@ -63,7 +63,11 @@ class R2Store:
                 aws_access_key_id=R2_ACCESS_KEY_ID,
                 aws_secret_access_key=R2_SECRET_ACCESS_KEY,
                 region_name="auto",
-                config=Config(retries={"max_attempts": 3}, connect_timeout=5, read_timeout=20),
+                # boto3 >= 1.36 sends CRC checksum headers by default, which R2
+                # has rejected; Cloudflare's docs say to send them only when required.
+                config=Config(retries={"max_attempts": 3}, connect_timeout=5, read_timeout=20,
+                              request_checksum_calculation="when_required",
+                              response_checksum_validation="when_required"),
             )
         self.client = client
         self._known: set[str] = set()  # keys confirmed to exist, saves a HEAD per request
