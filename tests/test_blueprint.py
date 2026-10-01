@@ -53,6 +53,15 @@ class LookupTest(unittest.TestCase):
         self.assertFalse(bp.is_sold(self.c, self.home("1 First St")))
 
 
+class BaseUrlTest(unittest.TestCase):
+    def test_bare_host_and_pasted_paths(self):
+        for given in ("blueprint-x.up.railway.app", "https://blueprint-x.up.railway.app/",
+                      '"https://blueprint-x.up.railway.app/api/feed/marketing"'):
+            os.environ["BLUEPRINT_URL"] = given
+            self.assertEqual(blueprint.base_url(), "https://blueprint-x.up.railway.app")
+        os.environ.pop("BLUEPRINT_URL")
+
+
 class SoldHomesStayTest(unittest.TestCase):
     def setUp(self):
         db.reset_for_tests()

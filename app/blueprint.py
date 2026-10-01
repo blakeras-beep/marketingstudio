@@ -111,8 +111,17 @@ def configured() -> bool:
     return bool(os.environ.get("BLUEPRINT_URL", "").strip() and os.environ.get("MARKETING_FEED_TOKEN", "").strip())
 
 
+def base_url() -> str:
+    """BLUEPRINT_URL as given, with https:// added when only a host was pasted."""
+    url = os.environ.get("BLUEPRINT_URL", "").strip().strip('"').strip("'").rstrip("/")
+    for tail in ("/api/feed/marketing", "/api/feed"):
+        if url.endswith(tail):
+            url = url[: -len(tail)]
+    return url if "://" in url else "https://" + url
+
+
 def _fetch() -> dict:
-    url = os.environ["BLUEPRINT_URL"].strip().rstrip("/") + "/api/feed/marketing"
+    url = base_url() + "/api/feed/marketing"
     req = urllib.request.Request(url, headers={"Authorization": "Bearer " + os.environ["MARKETING_FEED_TOKEN"].strip(),
                                                "User-Agent": "SandlinMarketingStudio/1.0"})
     with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
