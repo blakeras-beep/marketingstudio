@@ -5,11 +5,11 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from . import bdx, config, fmt
+from . import bdx, config, fmt, images
 from .flyers import (
     COMMUNITY_FLYERS, FLYERS_BY_KEY, HOME_FLYER, GRID_CARDS, PLAN_ROWS, PRICING_ROWS,
     paginate, sorted_homes, sorted_plans,
@@ -20,6 +20,7 @@ app = FastAPI(title="Sandlin Marketing Studio", docs_url=None, redoc_url=None)
 app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
 templates = Jinja2Templates(directory=HERE / "templates")
 templates.env.filters.update(fmt.FILTERS)
+templates.env.globals.update(img=images.src)
 templates.env.globals.update(DASH=fmt.DASH, READY=fmt.READY, DISCLAIMER=config.DISCLAIMER,
                              city_line=fmt.city_line, plan_label=fmt.plan_label)
 
@@ -45,6 +46,19 @@ def _doc_title(c: bdx.Community, name: str) -> str:
     # Becomes the default "Save as PDF" filename.
     safe = lambda s: "".join(ch if ch.isalnum() else "-" for ch in s).strip("-")
     return f"Sandlin-{safe(c.name)}-{safe(name)}-{date.today():%Y-%m-%d}"
+
+
+@app.get("/img")
+def image(u: str, w: int, h: int | None = None, la: int = 0):
+    """Feed photo downsampled to print size (see app/images.py)."""
+    if not images.allowed(u) or not (16 <= w <= 4000) or (h is not None and not 16 <= h <= 4000):
+        raise HTTPException(400, "Image not allowed")
+    try:
+        path = images.render(u, w, h, bool(la))
+    except Exception as e:  # unreachable/corrupt source: the page shows placeholder art
+        raise HTTPException(502, f"Image unavailable: {type(e).__name__}")
+    return FileResponse(path, media_type="image/jpeg",
+                        headers={"Cache-Control": "public, max-age=604800"})
 
 
 @app.get("/healthz")

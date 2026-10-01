@@ -8,7 +8,7 @@
 <div class="grid">
   {% for c in communities %}
   <a class="tile" href="/c/{{ c.slug }}" data-name="{{ c.name | lower }} {{ (c.city or '') | lower }}">
-    <div class="ph" style="{% if c.hero %}background-image:url('{{ c.hero }}'){% endif %}"></div>
+    <div class="ph" style="{% if c.hero %}background-image:url('{{ img(c.hero, 2.6) }}'){% endif %}"></div>
     <div class="bd">
       <div class="n">{{ c.name }}</div>
       <div class="m">{{ city_line(c.city, c.state) }}{% if c.status %} &middot; <span class="chip">{{ c.status | status }}</span>{% endif %}{% if c.tier == "signature" %} <span class="chip sig">Signature</span>{% endif %}</div>

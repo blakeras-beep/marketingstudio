@@ -5,7 +5,7 @@
 {% set sch = c.schools %}{% set ct = c.contact %}
 <section class="sheet">
   <div class="hero">
-    <img class="photo" src="{{ c.hero or '/static/placeholder.svg' }}" alt="">
+    <img class="photo" src="{{ img(c.hero, 8.5) or '/static/placeholder.svg' }}" alt="">
     <div class="cap on-navy">
       <div>
         <div class="eyebrow">A Sandlin {{ "Signature" if c.tier == "signature" else "Homes" }} Community</div>

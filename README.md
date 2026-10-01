@@ -86,6 +86,22 @@ Settings (environment variables): `BDX_FEED_URL`, `BDX_CACHE_TTL` (default 900 s
 Deploys anywhere that runs a Python web process (`Procfile` included for
 Railway/Heroku-style hosts).
 
+## Photos
+
+Feed photos are often photographer originals (up to ~6000 px and 9–12 MB),
+which the browser would embed untouched, making a two-page flyer up to 30 MB.
+`/img` (`app/images.py`, Pillow) fetches each photo once, downsamples it to the
+size it prints at (200 dpi for photos, 300 dpi for floor plans), keeps its color
+profile, and caches it on disk. A JPEG already at or under print size is served
+byte-for-byte. Only the feed's hosts are fetched (S3 `buildercloud`,
+`www.sandlinhomes.com`).
+
+Measured on the live feed: single-home flyers median 572 KB (max 1.1 MB),
+grid flyers median 645 KB (max 1.2 MB), info sheets ~500 KB.
+
+Settings: `IMAGE_DPI` (default 200), `IMAGE_CACHE_DIR` (default
+`/tmp/marketingstudio-img`; safe to delete, it refills on demand).
+
 ## Print-readiness contract
 
 Each flyer sets `<html data-print-ready="true">` once fonts are loaded and every
