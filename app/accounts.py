@@ -6,7 +6,7 @@ import os
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from . import auth
+from . import auth, seed
 from .web import templates
 
 router = APIRouter()
@@ -136,3 +136,15 @@ async def reset_password(request: Request, user_id: int):
     except ValueError as e:
         return _back("/admin/users", err=str(e))
     return _back("/admin/users", msg="Password reset. They've been signed out everywhere.")
+
+
+@router.post("/admin/import-reference")
+def import_reference(request: Request):
+    _check_post(request)
+    me = auth.require(request, "admin")
+    r = seed.run(me["id"])
+    msg = (f"Imported {r['fields']} values from the current flyers "
+           f"({r['communities']} communities, {r['plans']} plans, {r['homes']} homes). Existing values were kept.")
+    if r["unmatched"]:
+        msg += f" Not in the feed: {', '.join(r['unmatched'][:12])}{'…' if len(r['unmatched']) > 12 else ''}."
+    return _back("/admin/users", msg=msg)

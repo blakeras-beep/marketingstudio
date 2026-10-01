@@ -1,0 +1,64 @@
+{% extends "flyers/_base.html" %}
+{# Matches reference/flyers/_Plan Flyers/<Plan>.pdf (InDesign) pages 1-2. The options pages (3+) aren't in the feed and are left out. #}
+{% block pages %}
+{% set labels = vals.lines('plan', plan_subject(p), 'elevation_labels') %}
+{# (image, caption) pairs in feed order, which is A, B, C ... on the originals too. #}
+{% set pairs = [] %}
+{% for src in p.elevations %}{% set i = loop.index0 %}
+  {%- set cap = p.elevation_captions[i] if p.elevation_captions|length > i else None -%}
+  {%- set label = labels[i] if labels|length > i and labels[i] != '-' else (elevation_caption(cap, p.name) if cap else '') -%}
+  {%- set _ = pairs.append((src, label)) -%}
+{% endfor %}
+{% set els = pairs[:4] %}
+{% set specs = [] %}
+{% if p.beds %}{% set _ = specs.append((p.beds | num) ~ ' Bedrooms') %}{% endif %}
+{% if p.baths %}{% set _ = specs.append((p.baths | baths(p.half_baths)) ~ ' Bathrooms') %}{% endif %}
+{% if p.garage %}{% set _ = specs.append((p.garage | num) ~ '-Car Garage') %}{% endif %}
+{% if p.sqft %}{% set _ = specs.append((p.sqft | string) ~ ' Sq Ft') %}{% endif %}
+{# ---- page 1: elevations ---- #}
+<section class="sheet pf">
+  <div class="a" style="left:0;top:0;width:612pt;height:174.2pt;background:#dddcdd"></div>
+  <img class="a" src="/static/logo-navy.png" alt="Sandlin Homes" style="left:166pt;top:20.4pt;width:280pt">
+  <div class="a ttl" data-autofit="26">The {{ p.name }}</div>
+  <div class="a" style="left:0;top:174.2pt;width:612pt;height:7pt;background:#0e2245"></div>
+
+  {% set n = els|length %}
+  {% if n == 1 %}{% set boxes = [(106, 230, 400, 300)] %}
+  {% elif n == 2 %}{% set boxes = [(8.1, 290, 297.9, 178), (306, 290, 298.4, 178)] %}
+  {% elif n == 3 %}{% set boxes = [(8.1, 205, 297.9, 178), (306, 205, 298.4, 178), (154.8, 434.9, 298.5, 176.8)] %}
+  {% else %}{% set boxes = [(8.1, 196, 297.9, 178), (306, 196, 298.4, 178), (8.1, 416, 297.9, 178), (306, 416, 298.4, 178)] %}{% endif %}
+  {% for src, label in els %}{% set b = boxes[loop.index0] %}
+  <div class="a" style="left:{{ b[0] }}pt;top:{{ b[1] }}pt;width:{{ b[2] }}pt;height:{{ b[3] }}pt;overflow:hidden">
+    <img class="cover" src="{{ img(src, 4.2 if n > 1 else 5.6) }}" alt="">
+  </div>
+  <div class="a cap" style="left:{{ b[0] }}pt;top:{{ b[1] + b[3] + 0.6 }}pt;width:{{ b[2] }}pt">{{ label }}</div>
+  {% else %}
+  <div class="a" style="left:106pt;top:230pt;width:400pt;height:300pt"><img class="cover" src="/static/placeholder.svg" alt=""></div>
+  {% endfor %}
+
+  <div class="a" style="left:0;top:656.6pt;width:612pt;height:135.4pt;background:#0e2245"></div>
+  <div class="a specs" data-autofit="14">{{ specs | join(' | ') or DASH }}</div>
+  <div class="a www">SandlinHomes.com</div>
+  <img class="a" src="/static/brand/eho-white.png" alt="Equal Housing Opportunity" style="left:568pt;top:744pt;width:22.5pt;height:24pt">
+</section>
+
+{# ---- page 2: floor plan ---- #}
+{% set fps = p.floorplans[:2] %}
+<section class="sheet pf">
+  <div class="a" style="left:0;top:0;width:612pt;height:58.5pt;background:#0e2245"></div>
+  <div class="a" style="left:0;top:58.5pt;width:612pt;height:7pt;background:#bbbaba"></div>
+  <div class="a h2" style="left:15.6pt;top:10.4pt">Floorplan</div>
+  <div class="a h2r">{{ (p.sqft | string ~ ' Sq Ft') if p.sqft else '' }}</div>
+  <div class="a fpbox fp-scale">
+    {% for src in fps %}
+    <figure><img class="plan-img" src="{{ img(src, 7.4 if fps|length == 1 else 4.6, 8.4, line_art=True) }}" alt="Floor plan">
+      {% if fps|length > 1 %}<figcaption>{{ 'First Floor' if loop.first else 'Second Floor' }}</figcaption>{% endif %}</figure>
+    {% else %}
+    <figure style="flex:1"><img class="contain" src="/static/placeholder.svg" alt=""></figure>
+    {% endfor %}
+  </div>
+  <div class="a disc">All discounts and/or incentives are subject to credit approval and use of builder's preferred lender and title company. Floorplans and renderings are artist's
+    conceptions. Dimensions are approximate. Floor plans, room sizes, exteriors, and standard features may vary. Sandlin Homes reserves the right to modify
+    the plan and specifications without notice or obligation. Copyright {{ today.year }} Sandlin Homes - All Rights Reserved</div>
+</section>
+{% endblock %}

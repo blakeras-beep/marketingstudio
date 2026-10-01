@@ -163,3 +163,53 @@ class PasswordTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SeedImportTest(unittest.TestCase):
+    """The reference import fills only empty fields and matches names loosely."""
+
+    def setUp(self):
+        db.reset_for_tests()
+        auth.bootstrap_admin()
+        xml = XML.replace(b"<SubdivisionName>Fixture Park</SubdivisionName>",
+                          b"<SubdivisionName>Fixture Park</SubdivisionName>").replace(
+            b"<PlanName>Alpha</PlanName>", b"<PlanName>Alpha II</PlanName>")
+        self.p = mock.patch.object(bdx, "state", lambda force=False: bdx.FeedState(communities=bdx.parse(xml)))
+        self.p.start()
+        from app import seed
+        self.seed = seed
+        self.data = {
+            "communities": {"Fixture Park - Ph 2": {"hoa": "$900/year", "utilities": ["Gas: Atmos", "Water: City"]}},
+            "plans": {"Fixture Park - Ph 2": {"ALPHA 2": {"beds_range": "3 - 4"}, "Gone Plan": {"beds_range": "1"}}},
+            "homes": {"Fixture Park - Ph 2": {"1 Test Way": {"features": ["Island"]}, "9 Sold Ln": {"features": ["x"]}}},
+        }
+
+    def tearDown(self):
+        self.p.stop()
+
+    def run_with(self, data):
+        import json
+        import tempfile
+        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
+            json.dump(data, f)
+        with mock.patch.object(self.seed, "SEED", __import__("pathlib").Path(f.name)):
+            return self.seed.run(1)
+
+    def test_fills_empty_and_matches_loosely(self):
+        inputs.save("community", "SUB1", {"hoa": "$1,000/year"}, 1)   # marketing already set this
+        r = self.run_with(self.data)
+        v = inputs.load()
+        self.assertEqual(v.get("community", "SUB1", "hoa"), "$1,000/year")          # kept
+        self.assertEqual(v.lines("community", "SUB1", "utilities"), ["Gas: Atmos", "Water: City"])
+        self.assertEqual(v.get("plan", "SUB1|Alpha II", "beds_range"), "3 - 4")     # ALPHA 2 == Alpha II
+        self.assertEqual(v.lines("home", "S1", "features"), ["Island"])
+        self.assertIn("plan Gone Plan (Fixture Park)", r["unmatched"])
+        self.assertEqual(self.run_with(self.data)["fields"], 0)                      # idempotent
+
+    def test_real_seed_file_is_valid(self):
+        import json
+        data = json.loads(self.seed.SEED.read_text(encoding="utf-8"))
+        self.assertTrue(data["communities"] and data["plans"] and data["homes"])
+        cl = data["communities"]["Country Lakes"]
+        self.assertEqual(cl["hoa"], "$900/year")
+        self.assertIn("- Upgraded **Kichler** light package", cl["standard_features"])

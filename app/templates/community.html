@@ -24,6 +24,29 @@
   {% endfor %}
 </div>
 
+<h2>Plan Flyers &middot; {{ plans | length }} plans</h2>
+{% if plans %}
+<div class="scroll">
+<table>
+  <thead><tr><th>Plan</th><th class="r">Sq. Ft.</th><th>Beds / Baths</th><th class="r">From</th><th></th></tr></thead>
+  <tbody>
+  {% for p in plans %}
+    <tr>
+      <td>{{ p.name | text }}</td>
+      <td class="r">{{ p.sqft | sqft }}</td>
+      <td>{{ p.beds | num }} / {{ p.baths | baths(p.half_baths) }}</td>
+      <td class="r">{{ p.price_from | money }}</td>
+      <td class="r" style="white-space:nowrap">
+        <a class="btn" href="/c/{{ c.slug }}/plan/{{ p.slug }}">Preview</a>
+        <a class="btn primary" href="/c/{{ c.slug }}/plan/{{ p.slug }}?print=1">PDF</a>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+
 <h2>Single-Home Flyers &middot; {{ homes | length }} available</h2>
 {% if homes %}
 <div class="scroll">

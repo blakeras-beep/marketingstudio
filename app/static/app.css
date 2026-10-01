@@ -74,3 +74,6 @@ button.btn{ cursor:pointer; }
 .thumb input:checked + img{ border-color:var(--navy); }
 .thumb.none{ display:flex; gap:8px; align-items:center; margin-top:8px; font-size:13px; }
 .thumb.none input{ position:static; }
+.mono{ font-family:ui-monospace,Menlo,Consolas,monospace; font-size:13px; }
+.grid2{ display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px; }
+.flag{ background:#FFFAEB; border:1px solid #FEDF89; color:#93370D; border-radius:4px; padding:8px 12px; font-size:13px; }

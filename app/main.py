@@ -14,8 +14,8 @@ from fastapi.staticfiles import StaticFiles
 from . import accounts, auth, bdx, blueprint, db, edit, images, inputs, store
 from .web import templates
 from .flyers import (
-    COMMUNITY_FLYERS, FLYERS_BY_KEY, HOME_FLYER, GRID_CARDS, PLAN_ROWS, PRICING_ROWS,
-    paginate, sorted_homes, sorted_plans,
+    COMMUNITY_FLYERS, ELEVATION_ROWS, FLYERS_BY_KEY, GRID_CARDS, HOME_FLYER, PLAN_FLYER, PLAN_ROWS,
+    PRICING_ROWS, elevation_rows, paginate, sorted_homes, sorted_plans,
 )
 
 HERE = Path(__file__).parent
@@ -196,10 +196,23 @@ def repository(request: Request):
 @app.get("/c/{slug}", response_class=HTMLResponse)
 def community_page(request: Request, slug: str):
     c = _community_or_404(slug)
-    flyers = [(f, f.needs(c)) for f in COMMUNITY_FLYERS]
+    vals = inputs.load()
+    flyers = [(f, f.needs(c, vals)) for f in COMMUNITY_FLYERS]
     return templates.TemplateResponse(request, "community.html", {
-        "c": c, "flyers": flyers, "homes": sorted_homes(c),
+        "c": c, "flyers": flyers, "homes": sorted_homes(c), "plans": sorted_plans(c),
         "feed": _feed_banner(bdx.state()),
+    })
+
+
+@app.get("/c/{slug}/plan/{plan}", response_class=HTMLResponse)
+def plan_flyer(request: Request, slug: str, plan: str):
+    c = _community_or_404(slug)
+    p = c.plan(plan)
+    if p is None:
+        raise HTTPException(404, f"No plan '{plan}' in {c.name}")
+    return templates.TemplateResponse(request, PLAN_FLYER.template, {
+        "c": c, "p": p, "flyer": PLAN_FLYER, "today": date.today(),
+        "doc_title": _doc_title(c, p.name or "Plan"), "back": f"/c/{c.slug}", **_flyer_ctx(c),
     })
 
 
@@ -222,17 +235,24 @@ def community_flyer(request: Request, slug: str, key: str):
     f = FLYERS_BY_KEY.get(key)
     if f is None:
         raise HTTPException(404, f"Unknown flyer '{key}'")
-    reason = f.needs(c)
-    if reason:
-        raise HTTPException(409, f"{f.title} unavailable for {c.name}: {reason}")
     ctx = {"c": c, "flyer": f, "today": date.today(),
            "doc_title": _doc_title(c, f.title), "back": f"/c/{c.slug}", **_flyer_ctx(c)}
+    reason = f.needs(c, ctx["vals"])
+    if reason:
+        raise HTTPException(409, f"{f.title} unavailable for {c.name}: {reason}")
     if key == "pricing":
         ctx["pages"] = paginate(sorted_homes(c), *PRICING_ROWS)
     elif key == "plans":
         ctx["pages"] = paginate(sorted_plans(c), *PLAN_ROWS)
     elif key == "grid":
         ctx["pages"] = paginate(sorted_homes(c), *GRID_CARDS)
+    elif key == "elevations":
+        ctx["pages"] = paginate(elevation_rows(c, ctx["vals"]), *ELEVATION_ROWS)
+        ctx["effective"] = inputs.last_changed(
+            "plan", [inputs.plan_subject(c, p.name or "") for p in c.plans], "elevations")
+    elif key == "features":
+        ctx["sections"] = inputs.parse_features(ctx["vals"].get("community", ctx["cs"], "standard_features"))
+        ctx["effective"] = inputs.last_changed("community", [ctx["cs"]], "standard_features")
     return templates.TemplateResponse(request, f.template, ctx)
 
 

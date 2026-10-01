@@ -50,4 +50,12 @@
   </tbody>
 </table>
 </div>
+
+<h2>Import from current flyers</h2>
+<form method="post" action="/admin/import-reference" class="card" style="display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap">
+  <p style="margin:0;max-width:720px">Fill <strong>empty</strong> flyer inputs with the values printed on today's flyers
+    (HOA, tax rate, lot size, utilities, attractions, Standard Features, plan bed/bath ranges, elevation prices, home feature bullets).
+    Anything already entered in Studio is left alone, so this is safe to run again.</p>
+  <button class="btn primary">Import</button>
+</form>
 {% endblock %}

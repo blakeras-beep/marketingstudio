@@ -23,7 +23,7 @@
   </fieldset>
   {% else %}
   <label>{{ f.label }}
-    {% if f.kind in ('lines', 'para') %}<textarea name="{{ f.key }}" rows="{{ 8 if f.kind == 'para' else 5 }}">{{ vals.get('community', cs, f.key) or '' }}</textarea>
+    {% if f.kind in ('lines', 'para', 'features') %}<textarea name="{{ f.key }}" rows="{{ 28 if f.kind == 'features' else (8 if f.kind == 'para' else 5) }}" {{ 'class=mono' if f.kind == 'features' }}>{{ vals.get('community', cs, f.key) or '' }}</textarea>
     {% else %}<input name="{{ f.key }}" value="{{ vals.get('community', cs, f.key) or '' }}">{% endif %}
     {% if f.hint %}<small>{{ f.hint }}</small>{% endif %}
   </label>
@@ -32,23 +32,29 @@
   <button class="btn primary">Save community facts</button>
 </form>
 
-<h2 id="plans">Plans · bed and bath ranges</h2>
+<h2 id="plans">Plans</h2>
 <form method="post" action="/c/{{ c.slug }}/edit/plans">
-<div class="scroll">
-<table>
-  <thead><tr><th>Plan</th><th>Feed beds / baths</th>{% for f in F.PLAN_FIELDS %}<th>{{ f.label }}</th>{% endfor %}</tr></thead>
-  <tbody>
-  {% for p in plans %}{% set ps = plan_subject(p) %}{% set pi = loop.index0 %}
-    <tr>
-      <td>{{ p.name | text }}</td>
-      <td>{{ p.beds | num }} / {{ p.baths | baths(p.half_baths) }}</td>
-      {% for f in F.PLAN_FIELDS %}<td><input name="{{ pi }}.{{ f.key }}" value="{{ vals.get('plan', ps, f.key) or '' }}" placeholder="{{ f.hint }}" aria-label="{{ p.name }} {{ f.label }}"></td>{% endfor %}
-    </tr>
-  {% endfor %}
-  </tbody>
-</table>
+{% for p in plans %}{% set ps = plan_subject(p) %}{% set pi = loop.index0 %}
+{% set elev = F.parse_elevations(vals.get('plan', ps, 'elevations')) %}
+{% set low = elev | map(attribute='price') | select | min if elev | map(attribute='price') | select | list else None %}
+<div class="card form" style="margin-bottom:12px">
+  <div class="cardhead"><strong>{{ p.name | text }}</strong>
+    <span class="muted">· feed: {{ p.sqft | sqft }} sq ft · {{ p.beds | num }} bd / {{ p.baths | baths(p.half_baths) }} ba · from {{ p.price_from | money }} · {{ p.elevations | length }} elevation image{{ '' if p.elevations|length == 1 else 's' }}</span></div>
+  {% if low and p.price_from and low != p.price_from %}
+  <div class="flag">Lowest elevation price here is {{ low | money }}, but the feed's starting price is {{ p.price_from | money }}. Check the elevation prices.</div>
+  {% endif %}
+  <div class="grid2">
+    {% for f in F.PLAN_FIELDS %}
+    <label>{{ f.label }}
+      {% if f.kind in ('lines', 'elevations') %}<textarea name="{{ pi }}.{{ f.key }}" rows="4" class="mono">{{ vals.get('plan', ps, f.key) or '' }}</textarea>
+      {% else %}<input name="{{ pi }}.{{ f.key }}" value="{{ vals.get('plan', ps, f.key) or '' }}">{% endif %}
+      <small>{{ f.hint }}</small>
+    </label>
+    {% endfor %}
+  </div>
 </div>
-<button class="btn primary" style="margin-top:12px">Save plan ranges</button>
+{% endfor %}
+<button class="btn primary">Save all plans</button>
 </form>
 
 <h2 id="homes">Homes · feature bullets</h2>

@@ -99,6 +99,13 @@ def isd(name) -> str:
     return re.sub(r"\s*Independent School District\b", " ISD", name or "").strip() or DASH
 
 
+def elevation_caption(caption, plan_name) -> str:
+    """Feed caption 'Bellaire A' -> 'Elevation A'; anything else is shown as given."""
+    cap = (caption or "").strip()
+    rest = cap[len(plan_name):].strip() if plan_name and cap.lower().startswith(plan_name.lower()) else cap
+    return f"Elevation {rest}" if 0 < len(rest) <= 3 else cap
+
+
 FILTERS = {
     "isd": isd,
     "phone_paren": phone_paren,

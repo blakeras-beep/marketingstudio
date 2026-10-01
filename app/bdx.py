@@ -40,6 +40,12 @@ class Plan:
     floorplans: list[str] = field(default_factory=list)
     photos: list[str] = field(default_factory=list)
     homes_available: int = 0
+    elevations: list[str] = field(default_factory=list)          # elevation renderings, feed order
+    elevation_captions: list[str | None] = field(default_factory=list)  # feed Caption per rendering, if any
+
+    @property
+    def slug(self) -> str:
+        return slugify(self.name or "plan")
 
 
 @dataclass
@@ -140,6 +146,9 @@ class Community:
 
     def home(self, slug: str) -> Home | None:
         return next((h for h in self.homes if h.slug == slug), None)
+
+    def plan(self, slug: str) -> "Plan | None":
+        return next((p for p in self.plans if p.slug == slug), None)
 
     def to_dict(self) -> dict:
         d = asdict(self)
@@ -272,6 +281,23 @@ def _images(el, *names, keep=lambda c: True) -> list[str]:
     return out
 
 
+def _captioned(el, *names) -> list[tuple[str, str | None]]:
+    """(url, Caption) pairs in SequencePosition order."""
+    if el is None:
+        return []
+    found = []
+    for i, c in enumerate(_kids(el, *names)):
+        url = _txt(c)
+        if url and re.match(r"https?://", url):
+            seq = _num(_attr(c, "SequencePosition"))
+            found.append((seq if seq is not None else 1e9, i, url, _attr(c, "Caption")))
+    seen, out = set(), []
+    for *_, url, cap in sorted(found):
+        if url not in seen:
+            seen.add(url); out.append((url, cap))
+    return out
+
+
 def _phone(el) -> str | None:
     if el is None:
         return None
@@ -315,6 +341,7 @@ def _parse_plan(el) -> Plan:
     imgs = _kid(el, "PlanImages")
     src = imgs if imgs is not None else el
     elev = _images(src, "ElevationImage")
+    capd = _captioned(src, "ElevationImage")
     return Plan(
         name=_t(el, "PlanName"),
         type=_attr(el, "Type"),
@@ -330,6 +357,8 @@ def _parse_plan(el) -> Plan:
         elevation=elev[0] if elev else None,
         floorplans=_images(src, "FloorPlanImage"),
         photos=elev + _images(src, "InteriorImage"),
+        elevations=[u for u, _ in capd],
+        elevation_captions=[cap for _, cap in capd],
     )
 
 

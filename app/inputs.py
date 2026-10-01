@@ -19,7 +19,7 @@ from .auth import now
 class Field:
     key: str
     label: str
-    kind: str = "text"   # text | lines | para | photo | photos
+    kind: str = "text"   # text | lines | para | photo | photos | features | elevations
     hint: str = ""
 
 
@@ -34,8 +34,16 @@ COMMUNITY_FIELDS = [
     Field("tax_rate", "Tax rate", hint="Shown only when Blueprint has no tax rate, e.g. 1.909%"),
     Field("utilities", "Utility providers", "lines", "One per line, e.g. Water & Sewer: Denton"),
     Field("attractions", "Attractions", "lines", "One per line"),
+    Field("standard_features", "Standard Features", "features",
+          "Sections start with '# ', bullets with '- '. Wrap brand names in **double stars** for bold. "
+          "A line with just === starts a new page. "
+          "Example:\n# KITCHEN FEATURES\n- **Delta** chrome faucet with vegetable sprayer"),
 ]
 PLAN_FIELDS = [
+    Field("elevations", "Elevations (All Elevations sheet)", "elevations",
+          "One per line: Elevation | Living SF | Price, e.g. A | 2,167 | 469,900"),
+    Field("elevation_labels", "Elevation labels (plan flyer)", "lines",
+          "Optional. One per line, in the order of the feed's elevation images, e.g. Elevation A"),
     Field("beds_range", "Beds range", hint="e.g. 3 - 4 (blank = the feed's base value)"),
     Field("baths_range", "Baths range", hint="e.g. 2.5 - 3.5 (blank = the feed's base value)"),
 ]
@@ -82,7 +90,7 @@ def save(scope: str, subject: str, values: dict[str, str], user_id: int) -> int:
             if key not in allowed:
                 continue
             f = allowed[key]
-            if f.kind in ("lines", "para", "photos"):
+            if f.kind in ("lines", "para", "photos", "features", "elevations"):
                 value = "\n".join(ln.strip() for ln in (raw or "").splitlines() if ln.strip())
             else:
                 value = " ".join((raw or "").split())
@@ -133,3 +141,61 @@ def description(c, vals: "Inputs") -> list[str]:
     """Flyer description paragraphs: marketing's override, else the feed's copy."""
     over = vals.lines("community", community_subject(c), "description")
     return over or [p for p in (c.description or "").split("\n") if p.strip()]
+
+
+# ---------------------------------------------------------------- structured fields
+
+def parse_features(text: str | None) -> list[dict]:
+    """'# SECTION' / '- item' text -> [{title, items:[[(text, bold), ...], ...]}]."""
+    import re as _re
+    sections: list[dict] = []
+    for raw in (text or "").splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        if line == "===":     # page break: the next section starts on a new page
+            sections.append({"title": "", "items": [], "page_break": True})
+            continue
+        if line.startswith("#"):
+            sections.append({"title": line.lstrip("#").strip(), "items": []})
+            continue
+        if not sections:
+            sections.append({"title": "", "items": []})
+        item = line[1:].strip() if line[0] in "-•*" and not line.startswith("**") else line
+        parts = _re.split(r"(\*\*.+?\*\*)", item)
+        sections[-1]["items"].append([(p[2:-2], True) if p.startswith("**") and p.endswith("**") else (p, False)
+                                      for p in parts if p])
+    return [s for s in sections if s["items"] or s["title"] or s.get("page_break")]
+
+
+def parse_elevations(text: str | None) -> list[dict]:
+    """'A | 2,167 | 469,900' lines -> [{elevation, sqft, price}] (unparseable numbers -> None)."""
+    import re as _re
+    out = []
+    for raw in (text or "").splitlines():
+        cells = [c.strip() for c in raw.split("|")]
+        if not cells or not cells[0]:
+            continue
+        def num(i):
+            v = _re.sub(r"[^\d.]", "", cells[i]) if len(cells) > i else ""
+            try:
+                return float(v) if v else None
+            except ValueError:
+                return None
+        out.append({"elevation": cells[0], "sqft": num(1), "price": num(2)})
+    return out
+
+
+def last_changed(scope: str, subjects: list[str], field: str) -> str | None:
+    """Date (M/D/YY) the given field was last changed for any of the subjects, else None."""
+    if not subjects:
+        return None
+    marks = ",".join("?" for _ in subjects)
+    with db.connect() as c:
+        row = c.one(f"SELECT MAX(updated_at) AS t FROM input_history WHERE scope = ? AND field = ? "
+                    f"AND subject IN ({marks})", (scope, field, *subjects))
+    if not row or not row["t"]:
+        return None
+    from datetime import datetime
+    d = datetime.fromisoformat(row["t"]).date()
+    return f"{d.month:02d}/{d.day:02d}/{d:%y}"

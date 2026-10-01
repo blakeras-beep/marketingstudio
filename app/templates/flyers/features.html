@@ -1,0 +1,62 @@
+{% extends "flyers/_base.html" %}
+{# Matches reference/flyers/<Community>/Standard Features/<Community> Features <date>.pdf (Word, 2 columns).
+   Content is marketing-maintained; it flows column by column, page by page (script below). #}
+{% block pages %}
+{% macro page(n) %}
+<section class="sheet ff" data-ff-page="{{ n }}">
+  <div class="a fx-head" style="left:0;top:0;width:612pt;height:153pt">
+    <img class="cover bg" src="{{ img(hero, 8.5) or '/static/placeholder.svg' }}" alt="">
+    <div class="wash"></div>
+    <div class="ttl" style="left:34pt;top:56pt;font-size:44pt;font-weight:500" data-autofit="26">{{ c.name }}</div>
+    <div class="a" style="left:35pt;top:113pt;width:150pt;height:1.5pt;background:#c9ced6"></div>
+    <div class="sub" style="left:35pt;top:124pt;font:12.5pt/1 'Carlito',sans-serif">Standard Features</div>
+    <img class="logo" src="/static/logo-navy.png" alt="Sandlin Homes" style="left:340pt;top:42pt;width:255pt">
+  </div>
+  <div class="a col" data-ff-col style="left:31.4pt"></div>
+  <div class="a col" data-ff-col style="left:327pt"></div>
+  <div class="a foot">To continuously improve options; Sandlin Homes reserves the right to change or discontinue products and materials without notice or penalty.{% if effective %} Standard features effective as of {{ effective }}.{% endif %}</div>
+  <img class="a" src="/static/brand/eho-black.png" alt="Equal Housing Opportunity" style="left:572pt;top:752pt;width:20pt;height:21.2pt">
+</section>
+{% endmacro %}
+{{ page(1) }}{{ page(2) }}{{ page(3) }}
+{# The content, flowed into the columns above by the script; never shown on its own. #}
+<div id="ff-source" hidden>
+  {% for s in sections %}
+  {% if s.page_break %}<i class="ff-break"></i>{% endif %}
+  {% if s.title %}<h3 class="ff-h">{{ s.title | upper }}</h3>{% endif %}
+  {% for it in s['items'] %}<div class="ff-i">{% for t, bold in it %}{% if bold %}<b>{{ t }}</b>{% else %}{{ t }}{% endif %}{% endfor %}</div>{% endfor %}
+  {% endfor %}
+</div>
+<script>
+// Flow headings and bullets into the columns in reading order: page 1 left, page 1 right,
+// page 2 left ... A heading never ends a column on its own. Runs once fonts are loaded (line
+// wraps depend on them), before the page's print-ready check; unused pages are removed.
+(document.fonts ? document.fonts.ready : Promise.resolve()).then(function(){
+  var cols = Array.prototype.slice.call(document.querySelectorAll('[data-ff-col]'));
+  var items = Array.prototype.slice.call(document.getElementById('ff-source').children);
+  var ci = 0;
+  function over(col){ return col.scrollHeight > col.clientHeight + 0.5; }
+  items.forEach(function(el){
+    if (el.classList.contains('ff-break')) {   // === : continue at the top of the next page
+      if (ci % 2 === 1) ci += 1;                              // on a right column: next page
+      else if (cols[ci] && cols[ci].children.length) ci += 2;  // on a used left column: next page
+      return;
+    }
+    while (ci < cols.length) {
+      var col = cols[ci];
+      col.appendChild(el);
+      if (!over(col)) return;
+      col.removeChild(el);
+      var last = col.lastElementChild;
+      var carry = last && last.classList.contains('ff-h') ? last : null;
+      ci++;
+      if (carry && ci < cols.length) cols[ci].appendChild(carry);
+    }
+  });
+  document.querySelectorAll('[data-ff-page]').forEach(function(p){
+    if (p.getAttribute('data-ff-page') !== '1' && !p.querySelector('[data-ff-col] > *')) p.remove();
+  });
+  if (ci >= cols.length) document.body.classList.add('has-overflow');
+});
+</script>
+{% endblock %}

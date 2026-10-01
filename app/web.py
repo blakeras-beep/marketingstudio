@@ -21,4 +21,5 @@ def _context(request: Request) -> dict:
 templates = Jinja2Templates(directory=HERE / "templates", context_processors=[_context])
 templates.env.filters.update(fmt.FILTERS)
 templates.env.globals.update(img=images.src, DASH=fmt.DASH, READY=fmt.READY, DISCLAIMER=config.DISCLAIMER,
-                             city_line=fmt.city_line, plan_label=fmt.plan_label)
+                             city_line=fmt.city_line, plan_label=fmt.plan_label,
+                             elevation_caption=fmt.elevation_caption)

@@ -1,0 +1,24 @@
+{% extends "flyers/_base.html" %}
+{# Matches reference/flyers/<Community>/Pricing/<Community> All Elevations <date>.pdf (Excel table). #}
+{# Elevation prices are maintained by marketing (no live per-elevation source), so the sheet is
+   dated by their last edit, never by today. #}
+{% block pages %}
+{% for rows in pages %}
+<section class="sheet fe">
+  <div class="a head" style="left:18.5pt;top:54.5pt;width:396pt;height:15.4pt"></div>
+  {% for label, x, w in [('Community', 18.1, 162), ('Plan', 180.1, 82.2), ('Elevation', 262.3, 48.4), ('Living SF', 310.7, 48.3), ('Sales Price', 359, 54.9)] %}
+  <div class="a hd" style="left:{{ x }}pt;width:{{ w }}pt">{{ label }}</div>
+  {% endfor %}
+  {% for r in rows %}{% set y = 73 + loop.index0 * 15.2 %}
+  <div class="a cell" style="left:20.4pt;top:{{ y }}pt;max-width:158pt">{{ c.name }}</div>
+  <div class="a cell" style="left:182.4pt;top:{{ y }}pt;max-width:79pt">{{ r.plan }}</div>
+  <div class="a cell" style="left:264.7pt;top:{{ y }}pt;max-width:45pt">{{ r.elevation }}</div>
+  <div class="a cell r" style="right:254.5pt;top:{{ y }}pt">{{ r.sqft | num }}</div>
+  <div class="a cell r price" style="right:199.7pt;top:{{ y }}pt">{{ r.price | money }}</div>
+  {% endfor %}
+  {% if not loop.last %}<div class="a cont" style="left:20.4pt;top:{{ 73 + rows|length * 15.2 + 4 }}pt">Continued on next page</div>{% endif %}
+  <div class="a foot">{% if effective %}Prices effective {{ effective }}. {% endif %}Prices subject to change without notice. See a Sandlin Homes sales counselor for details.</div>
+  <img class="a" src="/static/brand/eho-black.png" alt="Equal Housing Opportunity" style="left:566pt;top:744pt;width:24pt;height:25.4pt">
+</section>
+{% endfor %}
+{% endblock %}
