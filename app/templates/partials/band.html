@@ -1,0 +1,20 @@
+{# Header band. First page carries the full community header; continuation pages a slim one. #}
+{% if loop_first %}
+<div class="band on-navy">
+  <div>
+    <div class="eyebrow">{{ eyebrow }}</div>
+    <h1 style="font-size:28pt">{{ c.name }}</h1>
+    <div class="rule"></div>
+    <div class="sub">{{ city_line(c.city, c.state, c.zip) }}</div>
+  </div>
+  <div class="right">
+    <img class="logo" src="/static/logo-white.png" alt="Sandlin Homes">
+    <div class="eff">{{ effective }} {{ today.strftime('%B %-d, %Y') }}</div>
+  </div>
+</div>
+{% else %}
+<div class="band slim on-navy">
+  <h2>{{ c.name }} &middot; {{ eyebrow }}</h2>
+  <img class="logo" src="/static/logo-white.png" alt="Sandlin Homes" style="height:22px">
+</div>
+{% endif %}

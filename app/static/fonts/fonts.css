@@ -1,0 +1,5 @@
+/* Self-hosted (SIL OFL) so print never falls back to a system font. Latin subset. */
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:300 700;font-display:block;src:url(/static/fonts/CormorantGaramond-var.woff2) format('woff2');}
+@font-face{font-family:'Poppins';font-style:normal;font-weight:400;font-display:block;src:url(/static/fonts/Poppins-400.woff2) format('woff2');}
+@font-face{font-family:'Poppins';font-style:normal;font-weight:500;font-display:block;src:url(/static/fonts/Poppins-500.woff2) format('woff2');}
+@font-face{font-family:'Poppins';font-style:normal;font-weight:600;font-display:block;src:url(/static/fonts/Poppins-600.woff2) format('woff2');}

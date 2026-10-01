@@ -1,0 +1,41 @@
+{% extends "flyers/_base.html" %}
+{% block pages %}
+{% set page_count = pages | length %}
+{% for rows in pages %}
+{% set page_no = loop.index %}{% set loop_first = loop.first %}
+{% set eyebrow = "Available Homes" %}{% set effective = "Pricing Effective" %}
+<section class="sheet">
+  {% include "partials/band.html" %}
+  <div class="inner" data-fit style="top:{{ '2.05in' if loop.first else '1.05in' }};bottom:1.2in;overflow:hidden">
+    <table class="ledger">
+      <colgroup>
+        <col style="width:23%"><col style="width:15%"><col style="width:7%"><col style="width:7%">
+        <col style="width:9%"><col style="width:7%"><col style="width:7%"><col style="width:13%"><col style="width:12%">
+      </colgroup>
+      <thead><tr>
+        <th>Address</th><th>Plan</th><th class="c">Beds</th><th class="c">Baths</th>
+        <th class="r">Sq. Ft.</th><th class="c">Story</th><th class="c">Garage</th><th>Move-In</th><th class="r">Price</th>
+      </tr></thead>
+      <tbody>
+      {% for h in rows %}
+        <tr>
+          <td class="addr">{{ h.address or h.id }}</td>
+          <td>{{ h.plan | text }}</td>
+          <td class="c">{{ h.beds | num }}</td>
+          <td class="c">{{ h.baths | baths(h.half_baths) }}</td>
+          <td class="r">{{ h.sqft | sqft }}</td>
+          <td class="c">{{ h.stories | num }}</td>
+          <td class="c">{{ h.garage | num }}</td>
+          {% set mi = h.move_in | move_in(today) %}
+          <td class="{{ 'ready' if mi == READY }}">{{ mi }}</td>
+          <td class="r price">{{ h.price | money }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% if not loop.last %}<div class="cont">Continued on next page</div>{% endif %}
+  </div>
+  {% include "partials/foot.html" %}
+</section>
+{% endfor %}
+{% endblock %}

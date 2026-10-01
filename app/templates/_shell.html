@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Sandlin Marketing Studio{% endblock %}</title>
+<link rel="stylesheet" href="/static/fonts/fonts.css">
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header class="top">
+  <a href="/"><img src="/static/logo-white.png" alt="Sandlin Homes"></a>
+  <a href="/" class="name">Marketing Studio</a>
+  <span class="sp"></span>
+  <span class="feed">
+    {% if feed.fetched_at %}BDX feed updated {{ 'just now' if feed.age_min < 1 else feed.age_min ~ ' min ago' }}{% else %}BDX feed not loaded{% endif %}
+  </span>
+</header>
+{% if feed.error %}
+<div class="warn">
+  {% if feed.fetched_at %}Couldn't refresh the BDX feed ({{ feed.error }}). Showing data from {{ feed.age_min }} min ago.
+  {% else %}Couldn't load the BDX feed: {{ feed.error }}{% endif %}
+</div>
+{% endif %}
+<main>{% block main %}{% endblock %}</main>
+</body>
+</html>

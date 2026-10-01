@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ doc_title }}</title>
+<link rel="stylesheet" href="/static/fonts/fonts.css">
+<link rel="stylesheet" href="/static/print.css">
+</head>
+<body>
+<div class="toolbar">
+  <a href="{{ back }}">&larr; {{ c.name }}</a>
+  <span class="t">{{ flyer.title }}</span>
+  <span class="live">Live from the BDX feed &middot; {{ today.strftime('%b %-d, %Y') }}</span>
+  <span class="sp"></span>
+  <button id="pdf" disabled onclick="window.print()">Download PDF</button>
+</div>
+<div class="overflow-warn">A page's content runs past its edge and would be cut off in print (outlined in red). Tell marketing which community and flyer.</div>
+<div class="pages">
+{% block pages %}{% endblock %}
+</div>
+<script>
+// Print-readiness contract (same one a server-side renderer would drive):
+// <html data-print-ready="true"> once fonts are loaded and every <img> has
+// settled. Never gated on requestAnimationFrame (doesn't fire in hidden tabs).
+(function(){
+  var PH = '/static/placeholder.svg';
+  function fallback(img){ if (img.src.indexOf(PH) === -1) { img.src = PH; } }
+  var imgs = Array.prototype.slice.call(document.images);
+  imgs.forEach(function(img){
+    img.addEventListener('error', function(){ fallback(img); });
+    if (img.complete && img.naturalWidth === 0 && img.getAttribute('src')) fallback(img);
+  });
+  var settled = imgs.map(function(img){
+    return new Promise(function(res){
+      if (img.complete) return res();
+      img.addEventListener('load', res); img.addEventListener('error', res);
+    });
+  });
+  var fonts = document.fonts ? document.fonts.ready : Promise.resolve();
+  var failsafe = new Promise(function(res){ setTimeout(res, 12000); });
+  Promise.race([Promise.all([fonts].concat(settled)), failsafe]).then(function(){
+    var over = false;
+    document.querySelectorAll('.sheet').forEach(function(s){
+      s.querySelectorAll('[data-fit]').forEach(function(el){
+        if (el.scrollHeight > el.clientHeight + 1) { s.classList.add('overflowing'); over = true; }
+      });
+    });
+    if (over) document.body.classList.add('has-overflow');
+    document.documentElement.setAttribute('data-print-ready', 'true');
+    document.getElementById('pdf').disabled = false;
+    if (/[?&]print=1\b/.test(location.search)) window.print();
+  });
+})();
+</script>
+</body>
+</html>

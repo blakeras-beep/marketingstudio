@@ -1,0 +1,68 @@
+{% extends "flyers/_base.html" %}
+{% block pages %}
+{% set page_count = 2 %}{% set mi = h.move_in | move_in(today) %}
+{# ---- page 1: photo + facts ---- #}
+{% set page_no = 1 %}
+<section class="sheet">
+  <div class="homehero">
+    <img class="photo" src="{{ h.hero or '/static/placeholder.svg' }}" alt="">
+    {% if mi == READY %}<div class="flag">{{ READY }}</div>{% endif %}
+    <div class="logo-chip"><img src="/static/logo-white.png" alt="Sandlin Homes"></div>
+  </div>
+  <div class="addrband on-navy">
+    <div>
+      <div class="eyebrow">{{ c.name }}</div>
+      <h2 style="font-size:19pt">{{ h.address or h.id }}</h2>
+      <div style="font-size:8.5pt;letter-spacing:.12em;text-transform:uppercase;color:var(--navy-200);margin-top:3px">
+        {{ city_line(h.city or c.city, h.state or c.state, h.zip or c.zip) }}</div>
+    </div>
+    <div style="text-align:right">
+      <div class="price">{{ h.price | money }}</div>
+      <div class="eyebrow" style="margin:6px 0 0">{{ plan_label(h.plan) }}</div>
+    </div>
+  </div>
+
+  <div class="inner" style="top:6.12in">
+    <div class="stats" style="grid-template-columns:repeat(5,1fr)">
+      <div><div class="stat-n">{{ h.beds | num }}</div><div class="stat-l">Bedrooms</div></div>
+      <div><div class="stat-n">{{ h.baths | baths(h.half_baths) }}</div><div class="stat-l">Baths</div></div>
+      <div><div class="stat-n">{{ h.sqft | sqft }}</div><div class="stat-l">Sq. Ft.</div></div>
+      <div><div class="stat-n">{{ h.stories | num }}</div><div class="stat-l">Stories</div></div>
+      <div><div class="stat-n">{{ h.garage | num }}</div><div class="stat-l">Car Garage</div></div>
+    </div>
+  </div>
+
+  {% set extra = h.photos[1:4] %}
+  <div class="inner" data-fit style="top:7.1in;bottom:1.2in;overflow:hidden;display:grid;grid-template-columns:{{ '1.2fr 1fr' if extra else '1fr' }};gap:20px">
+    <div>
+      <div class="eyebrow">About This Home</div>
+      <p class="clamp muted" style="-webkit-line-clamp:9;font-size:8.6pt;line-height:1.55">{{ h.description | text }}</p>
+      <div class="kv" style="margin-top:6px">
+        <div class="k">Move-In</div><div>{{ mi }}</div>
+      </div>
+    </div>
+    {% if extra %}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;align-content:start">
+      {% for src in extra %}<div style="height:{{ '2.45in' if extra|length == 1 else '1.18in' }};{{ 'grid-column:1/-1' if loop.first }}"><img class="photo" src="{{ src }}" alt=""></div>{% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  {% include "partials/foot.html" %}
+</section>
+
+{# ---- page 2: floor plan ---- #}
+{% set page_no = 2 %}
+<section class="sheet">
+  <div class="band slim on-navy">
+    <h2>{{ plan_label(h.plan) if h.plan else 'Floor Plan' }} &middot; {{ h.address or h.id }}</h2>
+    <img class="logo" src="/static/logo-white.png" alt="Sandlin Homes" style="height:22px">
+  </div>
+  {% set fps = h.floorplans[:2] %}
+  <div class="fp {{ 'two' if fps|length > 1 }}">
+    {% for src in fps %}<div><img class="photo contain" src="{{ src }}" alt="Floor plan"></div>
+    {% else %}<div><img class="photo contain" src="/static/placeholder.svg" alt=""></div>{% endfor %}
+  </div>
+  <div class="inner" style="bottom:1.18in;text-align:center;font-size:8.6pt;color:var(--ink-muted)">{{ h | home_specs }}</div>
+  {% include "partials/foot.html" %}
+</section>
+{% endblock %}

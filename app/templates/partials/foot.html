@@ -1,0 +1,15 @@
+{# Footer on every sheet: logo, disclaimer, contact, effective date, EHO mark (legally required). #}
+<div class="foot">
+  <img class="logo" src="/static/logo-navy.png" alt="Sandlin Homes">
+  <div>
+    <div class="contact">
+      {%- set ct = c.contact -%}
+      {{ c.name }}{% if ct.phone %} &middot; {{ ct.phone }}{% endif %}{% if ct.email %} &middot; {{ ct.email }}{% endif %}
+    </div>
+    <div class="disc">{{ DISCLAIMER }}</div>
+  </div>
+  <div>
+    <div class="meta">Effective {{ today.strftime('%-m/%-d/%Y') }}<br>Page {{ page_no }} of {{ page_count }}</div>
+    <img class="eho" src="/static/eho.svg" alt="Equal Housing Opportunity">
+  </div>
+</div>

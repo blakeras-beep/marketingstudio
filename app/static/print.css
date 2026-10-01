@@ -1,0 +1,160 @@
+/* Sandlin Marketing Studio — flyer print styles.
+   Palette and type follow the Sandlin print design system (navy, Cormorant
+   Garamond display, Poppins body, warm parchment, stone accent). */
+
+:root{
+  --navy:#002147; --navy-700:#0A2F5C; --navy-600:#13416F; --navy-500:#2C5581;
+  --navy-300:#8B9EB7; --navy-200:#BDC9D9; --navy-100:#DFE5EE; --navy-50:#F1F4F8;
+  --stone:#CEB290; --parchment:#F7F2E9; --parchment-line:#E6DCC8;
+  --ink:#002147; --ink-muted:#334E73; --ink-subtle:#6B7D94; --border:#E3E7EC;
+}
+
+@page{ size:letter; margin:0; }
+*{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; }
+body{
+  font-family:'Poppins',sans-serif; font-size:9pt; line-height:1.5; color:var(--ink);
+  background:#5f6b7a; -webkit-print-color-adjust:exact; print-color-adjust:exact;
+}
+img{ display:block; }
+
+/* ---------- screen toolbar (never printed) ---------- */
+.toolbar{ position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:16px;
+  background:var(--navy); color:#fff; padding:10px 20px; font-size:13px; }
+.toolbar a{ color:var(--navy-200); text-decoration:none; }
+.toolbar .t{ font-weight:600; }
+.toolbar .live{ color:var(--navy-200); font-size:12px; }
+.toolbar .sp{ flex:1; }
+.toolbar button{ font:600 13px 'Poppins',sans-serif; background:var(--stone); color:var(--navy);
+  border:0; border-radius:4px; padding:8px 16px; cursor:pointer; }
+.toolbar button:disabled{ opacity:.5; cursor:wait; }
+.overflow-warn{ display:none; background:#B42318; color:#fff; padding:8px 20px; font-size:13px; }
+.has-overflow .overflow-warn{ display:block; }
+.pages{ padding:24px 0 48px; }
+
+/* ---------- sheet: exact US Letter ---------- */
+.sheet{ width:8.5in; height:11in; margin:0 auto 24px; background:#fff; position:relative;
+  overflow:hidden; box-shadow:0 2px 16px rgba(0,0,0,.25); }
+.sheet.overflowing{ outline:4px solid #B42318; }
+.inner{ position:absolute; left:.55in; right:.55in; }
+
+@media print{
+  body{ background:#fff; }
+  .toolbar,.overflow-warn{ display:none !important; }
+  .pages{ padding:0; }
+  .sheet{ margin:0; box-shadow:none; page-break-after:always; break-after:page; }
+  .sheet:last-child{ page-break-after:auto; break-after:auto; }
+  .sheet.overflowing{ outline:none; }
+}
+
+/* ---------- type ---------- */
+.display,h1,h2,h3{ font-family:'Cormorant Garamond',serif; font-weight:500; margin:0;
+  text-transform:uppercase; color:var(--navy);
+  font-feature-settings:'lnum' 1; font-variant-numeric:lining-nums; }
+h1{ font-size:34pt; letter-spacing:.12em; line-height:1.02; font-weight:400; }
+h2{ font-size:16pt; letter-spacing:.1em; line-height:1.15; }
+h3{ font-size:12pt; letter-spacing:.08em; line-height:1.2; }
+.eyebrow{ font-weight:600; font-size:7.2pt; letter-spacing:.3em; text-transform:uppercase;
+  color:var(--ink-subtle); margin:0 0 4px; }
+.on-navy{ color:#fff; }
+.on-navy .eyebrow,.on-navy.eyebrow{ color:var(--stone); }
+.on-navy h1,.on-navy h2,.on-navy h3{ color:#fff; }
+p{ margin:0 0 7px; }
+.muted{ color:var(--ink-muted); }
+.clamp{ display:-webkit-box; -webkit-box-orient:vertical; overflow:hidden; }
+
+/* ---------- header bands ---------- */
+.band{ position:absolute; left:0; right:0; top:0; background:var(--navy); color:#fff;
+  padding:.42in .55in .3in; display:flex; justify-content:space-between; align-items:flex-end; }
+.band .logo{ height:30px; }
+.band .rule{ height:2px; width:54px; background:var(--stone); margin:10px 0 8px; }
+.band .sub{ font-size:8.5pt; letter-spacing:.12em; text-transform:uppercase; color:var(--navy-200); }
+.band .right{ text-align:right; }
+.band .eff{ font-size:7.2pt; letter-spacing:.22em; text-transform:uppercase; color:var(--navy-200); margin-top:10px; white-space:nowrap; }
+.band.slim{ padding:.3in .55in .2in; }
+.band.slim h2{ color:#fff; }
+
+/* ---------- footer (every sheet) ---------- */
+.foot{ position:absolute; left:.55in; right:.55in; bottom:.32in; border-top:1.5px solid var(--navy);
+  padding-top:8px; display:grid; grid-template-columns:auto 1fr auto; gap:14px; align-items:start; }
+.foot .logo{ height:22px; margin-top:2px; }
+.foot .disc{ font-size:5.9pt; line-height:1.45; color:var(--ink-subtle); }
+.foot .meta{ font-size:6.4pt; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-subtle);
+  text-align:right; line-height:1.6; white-space:nowrap; }
+.foot .contact{ font-size:7.4pt; font-weight:600; color:var(--navy); letter-spacing:.04em; }
+.foot .eho{ height:30px; width:auto; color:var(--navy); margin-left:auto; margin-top:4px; }
+
+/* ---------- stats ---------- */
+.stats{ display:grid; grid-template-columns:repeat(4,1fr); border-top:1px solid var(--parchment-line);
+  border-bottom:1px solid var(--parchment-line); background:var(--parchment); }
+.stats > div{ padding:10px 14px; border-right:1px solid var(--parchment-line); }
+.stats > div:last-child{ border-right:0; }
+.stat-n{ font-family:'Cormorant Garamond',serif; font-size:20pt; font-weight:500; line-height:1.05;
+  color:var(--navy); font-feature-settings:'lnum' 1; font-variant-numeric:lining-nums; white-space:nowrap; }
+.stat-l{ font-size:6.6pt; font-weight:600; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--ink-subtle); margin-top:3px; }
+
+/* ---------- cards / key-value ---------- */
+.card{ background:var(--navy-50); border-top:3px solid var(--navy); padding:12px 14px; margin-bottom:12px; }
+.card.warm{ background:var(--parchment); border-top-color:var(--stone); }
+.card h3{ margin-bottom:8px; }
+.kv{ display:grid; grid-template-columns:auto 1fr; column-gap:10px; row-gap:4px; font-size:8.2pt; }
+.kv .k{ font-size:6.6pt; font-weight:600; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--ink-subtle); padding-top:2px; white-space:nowrap; }
+
+/* ---------- ledger tables (fixed row height keeps pagination exact) ---------- */
+table.ledger{ width:100%; border-collapse:collapse; table-layout:fixed; font-size:8.3pt; }
+.ledger th{ background:var(--navy); color:#fff; font-weight:600; font-size:6.6pt; letter-spacing:.14em;
+  text-transform:uppercase; text-align:left; padding:0 8px; height:28px; }
+.ledger td{ height:27px; padding:0 8px; border-bottom:1px solid var(--border); white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis; }
+.ledger tbody tr:nth-child(even) td{ background:var(--navy-50); }
+.ledger .r{ text-align:right; font-variant-numeric:tabular-nums; }
+.ledger .c{ text-align:center; font-variant-numeric:tabular-nums; }
+.ledger .price{ font-weight:600; }
+.ledger .addr{ font-weight:500; }
+.ledger .ready{ color:var(--navy-600); font-weight:600; }
+.cont{ font-size:7pt; letter-spacing:.2em; text-transform:uppercase; color:var(--ink-subtle);
+  text-align:right; margin-top:6px; }
+
+/* ---------- photos ---------- */
+.photo{ width:100%; height:100%; object-fit:cover; background:var(--navy-100); }
+.photo.contain{ object-fit:contain; background:#fff; }
+
+/* ---------- info sheet ---------- */
+.hero{ position:absolute; left:0; right:0; top:0; height:4.35in; }
+.hero .photo{ position:absolute; inset:0; }
+.hero .cap{ position:absolute; left:0; right:0; bottom:0; background:rgba(0,33,71,.92);
+  padding:.2in .55in .18in; display:flex; justify-content:space-between; align-items:flex-end; }
+.hero .cap .logo{ height:28px; }
+
+/* ---------- grid flyer ---------- */
+.cards{ display:grid; grid-template-columns:1fr 1fr; gap:14px 16px; }
+.hcard{ border:1px solid var(--border); background:#fff; height:2.4in; display:flex; flex-direction:column; }
+.hcard .ph{ height:1.4in; flex:none; position:relative; }
+.hcard .tag{ position:absolute; left:0; top:10px; background:var(--stone); color:var(--navy);
+  font-size:6.4pt; font-weight:600; letter-spacing:.18em; text-transform:uppercase; padding:3px 9px; }
+.hcard .bd{ padding:8px 11px; }
+.hcard .row1{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+.hcard .price{ font-family:'Cormorant Garamond',serif; font-size:17pt; font-weight:600; color:var(--navy);
+  font-feature-settings:'lnum' 1; font-variant-numeric:lining-nums; }
+.hcard .plan{ font-size:6.8pt; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-subtle); }
+.hcard .addr{ font-size:8.6pt; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hcard .specs{ font-size:7.4pt; color:var(--ink-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* ---------- single-home flyer ---------- */
+.homehero{ position:absolute; left:0; right:0; top:0; height:5in; }
+.homehero .photo{ position:absolute; inset:0; }
+.homehero .flag{ position:absolute; left:.55in; top:.4in; background:var(--stone); color:var(--navy);
+  font-size:7pt; font-weight:600; letter-spacing:.24em; text-transform:uppercase; padding:5px 12px; }
+.homehero .logo-chip{ position:absolute; right:.55in; top:.36in; background:var(--navy); padding:9px 12px; }
+.homehero .logo-chip img{ height:24px; }
+.addrband{ position:absolute; left:0; right:0; top:5in; background:var(--navy); color:#fff;
+  padding:.2in .55in; display:flex; justify-content:space-between; align-items:center; }
+.addrband .price{ font-family:'Cormorant Garamond',serif; font-size:30pt; font-weight:500; color:#fff;
+  font-feature-settings:'lnum' 1; font-variant-numeric:lining-nums; line-height:1; }
+.thumbs{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; height:1.25in; }
+.thumbs > div{ height:1.25in; }
+.fp{ position:absolute; left:.55in; right:.55in; top:1.45in; bottom:1.35in; display:grid; gap:14px; }
+.fp.two{ grid-template-rows:1fr 1fr; }
+.fp > div{ border:1px solid var(--border); padding:8px; min-height:0; }

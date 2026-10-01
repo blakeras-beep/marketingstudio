@@ -1,0 +1,51 @@
+{% extends "_shell.html" %}
+{% block title %}{{ c.name }} · Sandlin Marketing Studio{% endblock %}
+{% block main %}
+<a href="/" style="font-size:12px;color:var(--ink-subtle)">&larr; All communities</a>
+<h1 style="margin-top:8px">{{ c.name }}</h1>
+<p class="sub">{{ city_line(c.city, c.state, c.zip) }}{% if c.status %} &middot; <span class="chip">{{ c.status }}</span>{% endif %}</p>
+
+<h2>Community Flyers</h2>
+<div class="grid">
+  {% for f, reason in flyers %}
+  <div class="tile {{ 'off' if reason }}">
+    <div class="bd">
+      <div class="n" style="font-size:17px">{{ f.title }}</div>
+      <div class="m">{{ reason or f.blurb }}</div>
+      {% if not reason %}
+      <div class="actions">
+        <a class="btn" href="/c/{{ c.slug }}/{{ f.key }}">Preview</a>
+        <a class="btn primary" href="/c/{{ c.slug }}/{{ f.key }}?print=1">PDF</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<h2>Single-Home Flyers &middot; {{ homes | length }} available</h2>
+{% if homes %}
+<div class="scroll">
+<table>
+  <thead><tr><th>Address</th><th>Plan</th><th class="r">Sq. Ft.</th><th>Move-In</th><th class="r">Price</th><th></th></tr></thead>
+  <tbody>
+  {% for h in homes %}
+    <tr>
+      <td>{{ h.address or h.id }}</td>
+      <td>{{ h.plan | text }}</td>
+      <td class="r">{{ h.sqft | sqft }}</td>
+      <td>{{ h.move_in | move_in }}</td>
+      <td class="r">{{ h.price | money }}</td>
+      <td class="r" style="white-space:nowrap">
+        <a class="btn" href="/c/{{ c.slug }}/homes/{{ h.slug }}">Preview</a>
+        <a class="btn primary" href="/c/{{ c.slug }}/homes/{{ h.slug }}?print=1">PDF</a>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<div class="empty">No homes for {{ c.name }} in the BDX feed right now.</div>
+{% endif %}
+{% endblock %}

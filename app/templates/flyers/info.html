@@ -1,0 +1,62 @@
+{% extends "flyers/_base.html" %}
+{% block pages %}
+{% set page_no, page_count = 1, 1 %}
+{% set sch = c.schools %}{% set ct = c.contact %}
+<section class="sheet">
+  <div class="hero">
+    <img class="photo" src="{{ c.hero or '/static/placeholder.svg' }}" alt="">
+    <div class="cap on-navy">
+      <div>
+        <div class="eyebrow">A Sandlin Homes Community</div>
+        <h1>{{ c.name }}</h1>
+        <div style="font-size:9pt;letter-spacing:.14em;text-transform:uppercase;color:var(--navy-200);margin-top:6px">
+          {{ city_line(c.city, c.state, c.zip) }}</div>
+      </div>
+      <img class="logo" src="/static/logo-white.png" alt="Sandlin Homes">
+    </div>
+  </div>
+
+  <div class="inner" style="top:4.35in">
+    <div class="stats" style="margin:0 -.55in;padding:0 .41in">
+      <div><div class="stat-n">{{ c.price_from | money }}</div><div class="stat-l">Priced From</div></div>
+      <div><div class="stat-n" style="font-size:16pt;padding-top:3px">{{ c.sqft_range | sqft_range }}</div><div class="stat-l">Home Sizes</div></div>
+      <div><div class="stat-n">{{ c.plans | length or DASH }}</div><div class="stat-l">Floor Plans</div></div>
+      <div><div class="stat-n">{{ c.homes | length or DASH }}</div><div class="stat-l">Homes Available</div></div>
+    </div>
+  </div>
+
+  <div class="inner" style="top:5.35in;bottom:1.25in;display:grid;grid-template-columns:1.45fr 1fr;gap:22px">
+    <div data-fit style="overflow:hidden">
+      <div class="eyebrow">About the Community</div>
+      <h2 style="margin-bottom:10px">Welcome to {{ c.name }}</h2>
+      <p class="clamp muted" style="-webkit-line-clamp:14;font-size:8.8pt;line-height:1.6">{{ c.description | text }}</p>
+      {% if c.driving_directions %}
+      <div class="eyebrow" style="margin-top:12px">Driving Directions</div>
+      <p class="clamp muted" style="-webkit-line-clamp:4;font-size:8pt">{{ c.driving_directions }}</p>
+      {% endif %}
+    </div>
+    <div data-fit style="overflow:hidden">
+      <div class="card">
+        <h3>Schools</h3>
+        <div class="kv">
+          <div class="k">District</div><div>{{ sch.district | text }}</div>
+          <div class="k">Elementary</div><div>{{ sch.elementary | text }}</div>
+          <div class="k">Middle</div><div>{{ sch.middle | text }}</div>
+          <div class="k">High</div><div>{{ sch.high | text }}</div>
+        </div>
+      </div>
+      <div class="card warm">
+        <h3>Visit Our Sales Office</h3>
+        <div class="kv">
+          <div class="k">Address</div><div>{{ c.street | text }}<br>{{ city_line(c.city, c.state, c.zip) }}</div>
+          <div class="k">Contact</div><div>{{ ct.agents | join(', ') if ct.agents else DASH }}</div>
+          <div class="k">Phone</div><div>{{ ct.phone | text }}</div>
+          <div class="k">Email</div><div style="word-break:break-all">{{ ct.email | text }}</div>
+          <div class="k">Hours</div><div>{{ ct.hours | text }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% include "partials/foot.html" %}
+</section>
+{% endblock %}

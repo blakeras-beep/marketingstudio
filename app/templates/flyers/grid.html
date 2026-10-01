@@ -1,0 +1,29 @@
+{% extends "flyers/_base.html" %}
+{% block pages %}
+{% set page_count = pages | length %}
+{% for cards in pages %}
+{% set page_no = loop.index %}{% set loop_first = loop.first %}
+{% set eyebrow = "Quick Move-In Homes" %}{% set effective = "Pricing Effective" %}
+<section class="sheet">
+  {% include "partials/band.html" %}
+  <div class="inner cards" data-fit style="top:{{ '2.15in' if loop.first else '1.15in' }};bottom:1.2in;overflow:hidden;align-content:start">
+    {% for h in cards %}
+    {% set mi = h.move_in | move_in(today) %}
+    <div class="hcard">
+      <div class="ph">
+        <img class="photo" src="{{ h.hero or '/static/placeholder.svg' }}" alt="">
+        {% if mi == READY %}<div class="tag">{{ READY }}</div>{% endif %}
+      </div>
+      <div class="bd">
+        <div class="row1"><div class="price">{{ h.price | money }}</div><div class="plan">{{ h.plan | text }}</div></div>
+        <div class="addr">{{ h.address or h.id }}</div>
+        <div class="specs">{{ h | home_specs }}</div>
+        {% if mi != READY %}<div class="specs">Move-in: {{ mi }}</div>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% include "partials/foot.html" %}
+</section>
+{% endfor %}
+{% endblock %}

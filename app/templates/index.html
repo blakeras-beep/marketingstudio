@@ -1,0 +1,27 @@
+{% extends "_shell.html" %}
+{% block main %}
+<h1>Community Collateral</h1>
+<p class="sub">Every flyer renders from the live BDX feed when you open it — prices, plans and inventory are always current.</p>
+{% if communities %}
+<input class="search" type="search" placeholder="Find a community" oninput="
+  var q=this.value.toLowerCase();document.querySelectorAll('[data-name]').forEach(function(t){t.style.display=t.dataset.name.indexOf(q)>-1?'':'none'})">
+<div class="grid">
+  {% for c in communities %}
+  <a class="tile" href="/c/{{ c.slug }}" data-name="{{ c.name | lower }} {{ (c.city or '') | lower }}">
+    <div class="ph" style="{% if c.hero %}background-image:url('{{ c.hero }}'){% endif %}"></div>
+    <div class="bd">
+      <div class="n">{{ c.name }}</div>
+      <div class="m">{{ city_line(c.city, c.state) }}{% if c.status %} &middot; <span class="chip">{{ c.status }}</span>{% endif %}</div>
+      <div class="facts">
+        <span>From {{ c.price_from | money }}</span>
+        <span>{{ c.homes | length }} home{{ '' if c.homes|length == 1 else 's' }}</span>
+        <span>{{ c.plans | length }} plan{{ '' if c.plans|length == 1 else 's' }}</span>
+      </div>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty">No communities to show. {% if feed.error %}The BDX feed couldn't be loaded.{% else %}The BDX feed has no subdivisions.{% endif %}</div>
+{% endif %}
+{% endblock %}
