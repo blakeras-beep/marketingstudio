@@ -160,19 +160,63 @@ def table_rows(pdf: Path, y_min: float, y_max: float) -> list[list[tuple]]:
     return rows
 
 
+def _cells(row, gap=4.0) -> list[str]:
+    """Spans of one table row joined into cells (a cell is spans closer than `gap`)."""
+    row = sorted(row, key=lambda s: s[0])
+    cells, last_x1 = [], None
+    for s in row:
+        if last_x1 is not None and s[0] - last_x1 < gap:
+            cells[-1] += s[4]
+        else:
+            cells.append(s[4])
+        last_x1 = s[2]
+    return [clean(c) for c in cells if clean(c)]
+
+
+PRICE = re.compile(r"^\$?\d{2,3}(,\d{3})+(\.\d\d)?$")
+SQFT = re.compile(r"^\d{1,2},\d{3}$|^\d{3,4}$")
+ELEV = re.compile(r"^(?:Elevation\s+)?([A-Z]{1,3}\d?)$")
+
+
 def elevations(pdf: Path) -> dict[str, list[str]]:
-    """{community name: ['Plan | A | 2,167 | 469,900', ...]} from an All Elevations sheet."""
-    out: dict[str, list[str]] = {}
-    for row in table_rows(pdf, 70, 780):
-        cells = {"community": [], "plan": [], "elev": [], "sqft": [], "price": []}
-        for s in row:
-            x = s[0]
-            key = "community" if x < 178 else "plan" if x < 260 else "elev" if x < 300 else "sqft" if x < 360 else "price"
-            cells[key].append(s[4])
-        c = {k: clean("".join(v)) for k, v in cells.items()}
-        if c["community"] and c["plan"] and c["elev"] and c["community"] != "Community":
-            out.setdefault(c["community"], []).append(f"{c['plan']} | {c['elev']} | {c['sqft']} | {c['price'].lstrip('$')}")
-    return out
+    """{'': ['Plan | A | 2,167 | 469,900', ...]} from an elevation price list, read from the right
+    of each row (price, optional living SF, elevation, plan) so both layouts work: the Excel
+    'All Elevations' sheet and the MarkSystems export (company, dev code, model, 'Elevation A', price)."""
+    rows = []
+    for row in table_rows(pdf, 40, 780):
+        cells = _cells(row)
+        if cells and cells[-1].upper().endswith("N/A"):     # listed, not priced: kept, price left blank
+            rest = cells[-1][:-3].strip()
+            cells = cells[:-1] + ([rest] if rest else []) + ["N/A"]
+        if len(cells) < 3 or not (PRICE.match(cells[-1]) or cells[-1] == "N/A"):
+            continue
+        price = "" if cells[-1] == "N/A" else cells[-1].lstrip("$")
+        if price.endswith(".00"):
+            price = price[:-3]
+        i = len(cells) - 2
+        sqft = ""
+        if SQFT.match(cells[i]):
+            sqft, i = cells[i], i - 1
+        m = ELEV.match(cells[i]) if i >= 1 else None
+        if not m:
+            continue
+        plan = cells[i - 1]
+        rows.append(f"{plan} | {m.group(1)} | {sqft} | {price}")
+    return {"": rows} if rows else {}
+
+
+def sheet_date(pdf: Path) -> str | None:
+    """'... 5.27.26.pdf' / '..._09.24.26.pdf' / '4.7.25' -> '2026-05-27' (the date in the file name)."""
+    m = re.findall(r"(\d{1,2})\.(\d{1,2})\.(\d{2}(?:\d{2})?)(?!\d)", pdf.stem)
+    if not m:
+        return None
+    mo, d, y = (int(v) for v in m[-1])
+    y += 2000 if y < 100 else 0
+    try:
+        from datetime import date
+        return date(y, mo, d).isoformat()
+    except ValueError:
+        return None
 
 
 def price_sheet(pdf: Path) -> dict[str, dict]:
@@ -211,6 +255,8 @@ def main() -> int:
             text = standard_features(pdf)
             if text.count("\n- ") >= 5:
                 com["standard_features"] = text
+                if sheet_date(pdf):
+                    seed.setdefault("dated", {}).setdefault(name, {})["standard_features"] = sheet_date(pdf)
                 seed["sources"].append(str(pdf.relative_to(ROOT)))
         if com:
             seed["communities"][name] = com
@@ -231,8 +277,11 @@ def main() -> int:
             for plan, rec in price_sheet(pdf).items():
                 plans.setdefault(plan, {}).update(rec)
             seed["sources"].append(str(pdf.relative_to(ROOT)))
-        for pdf in sorted((folder / "Pricing").glob("*Elevation*.pdf")):
-            for _community, rows in elevations(pdf).items():
+        for pdf in sorted((folder / "Pricing").glob("*Elevation*.pdf"), key=lambda p: sheet_date(p) or ""):
+            got = elevations(pdf)
+            if got and sheet_date(pdf):
+                seed.setdefault("dated", {}).setdefault(name, {})["elevations"] = sheet_date(pdf)
+            for _community, rows in got.items():
                 for r in rows:
                     plan, rest = r.split(" | ", 1)
                     plans.setdefault(plan, {}).setdefault("elevations", []).append(rest)

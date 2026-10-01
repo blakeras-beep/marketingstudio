@@ -49,9 +49,18 @@ def run(user_id: int) -> dict:
     vals = inputs.load()
     out = {"fields": 0, "communities": 0, "plans": 0, "homes": 0, "unmatched": []}
 
-    def fill(scope, subject, values: dict) -> int:
+    dated = data.get("dated", {})
+
+    def fill(scope, subject, values: dict, folder: str | None = None) -> int:
+        """Empty fields only. A field taken from a dated sheet (features, elevation prices) is
+        stamped with that sheet's date, so "effective" on the flyer is the original's date."""
         empty = {k: v for k, v in values.items() if v and not vals.get(scope, subject, k)}
-        return inputs.save(scope, subject, empty, user_id) if empty else 0
+        when = dated.get(folder or "", {})
+        n = 0
+        for key in ("standard_features", "elevations"):
+            if key in empty and when.get(key):
+                n += inputs.save(scope, subject, {key: empty.pop(key)}, user_id, at=when[key] + "T12:00:00+00:00")
+        return n + (inputs.save(scope, subject, empty, user_id) if empty else 0)
 
     def as_text(v):
         return "\n".join(v) if isinstance(v, list) else v
@@ -61,7 +70,7 @@ def run(user_id: int) -> dict:
         if c is None:
             out["unmatched"].append(f"community {name}")
             continue
-        n = fill("community", inputs.community_subject(c), {k: as_text(v) for k, v in rec.items()})
+        n = fill("community", inputs.community_subject(c), {k: as_text(v) for k, v in rec.items()}, name)
         out["fields"] += n
         out["communities"] += bool(n)
 
@@ -75,7 +84,7 @@ def run(user_id: int) -> dict:
             if p is None:
                 out["unmatched"].append(f"plan {printed} ({c.name})")
                 continue
-            n = fill("plan", inputs.plan_subject(c, p.name or ""), rec)
+            n = fill("plan", inputs.plan_subject(c, p.name or ""), rec, name)
             out["fields"] += n
             out["plans"] += bool(n)
 

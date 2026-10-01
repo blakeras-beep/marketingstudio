@@ -81,10 +81,11 @@ def load() -> Inputs:
         return Inputs(c.q("SELECT scope, subject, field, value FROM inputs"))
 
 
-def save(scope: str, subject: str, values: dict[str, str], user_id: int) -> int:
-    """Upsert the given fields; blank clears. Returns the number of fields that changed."""
+def save(scope: str, subject: str, values: dict[str, str], user_id: int, at: str | None = None) -> int:
+    """Upsert the given fields; blank clears. Returns the number of fields that changed.
+    `at` dates the change (the import uses the original sheet's date, so "effective" stays true)."""
     allowed = {f.key: f for f in FIELDS[scope]}
-    changed, ts = 0, now()
+    changed, ts = 0, at or now()
     with db.connect() as c:
         for key, raw in values.items():
             if key not in allowed:
