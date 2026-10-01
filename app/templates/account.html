@@ -1,0 +1,15 @@
+{% extends "_shell.html" %}
+{% block title %}Your account · Sandlin Marketing Studio{% endblock %}
+{% block main %}
+<div class="narrow">
+  <h1>Your account</h1>
+  <p class="sub">{{ user.name }} · {{ user.email }} · <span class="chip">{{ ROLE_LABELS[user.role] }}</span></p>
+  <h2>Change password</h2>
+  <form method="post" action="/account/password" class="form">
+    <label>Current password<input type="password" name="current" autocomplete="current-password" required></label>
+    <label>New password<input type="password" name="new" autocomplete="new-password" minlength="10" required></label>
+    <label>Confirm new password<input type="password" name="confirm" autocomplete="new-password" minlength="10" required></label>
+    <button class="btn primary">Change password</button>
+  </form>
+</div>
+{% endblock %}

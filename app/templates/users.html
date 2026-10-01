@@ -1,0 +1,53 @@
+{% extends "_shell.html" %}
+{% block title %}Users · Sandlin Marketing Studio{% endblock %}
+{% block main %}
+<h1>Users</h1>
+<p class="sub"><strong>Admin</strong> manages users and can edit everything · <strong>Marketing</strong> edits flyer inputs · <strong>CSM</strong> views and downloads flyers.</p>
+
+<h2>Add a user</h2>
+<form method="post" action="/admin/users" class="form row">
+  <label>Name<input name="name" required></label>
+  <label>Email<input type="email" name="email" required></label>
+  <label>Role<select name="role">{% for r in roles %}<option value="{{ r }}" {{ 'selected' if r == 'csm' }}>{{ ROLE_LABELS[r] }}</option>{% endfor %}</select></label>
+  <label>Temporary password<input name="password" minlength="{{ min_password }}" required autocomplete="off"></label>
+  <button class="btn primary">Add user</button>
+</form>
+
+<h2>Everyone</h2>
+<div class="scroll">
+<table>
+  <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Reset password</th></tr></thead>
+  <tbody>
+  {% for u in users %}
+    <tr class="{{ 'off' if not u.active }}">
+      <td>
+        <form method="post" action="/admin/users/{{ u.id }}" class="inline">
+          <input name="name" value="{{ u.name }}" aria-label="Name"><button class="btn">Save</button>
+        </form>
+      </td>
+      <td>{{ u.email }}{% if u.id == user.id %} <span class="chip">you</span>{% endif %}</td>
+      <td>
+        <form method="post" action="/admin/users/{{ u.id }}" class="inline">
+          <select name="role" aria-label="Role" onchange="this.form.submit()">
+            {% for r in roles %}<option value="{{ r }}" {{ 'selected' if r == u.role }}>{{ ROLE_LABELS[r] }}</option>{% endfor %}
+          </select>
+        </form>
+      </td>
+      <td>
+        <form method="post" action="/admin/users/{{ u.id }}" class="inline">
+          <input type="hidden" name="active" value="{{ '0' if u.active else '1' }}">
+          <button class="btn">{{ 'Deactivate' if u.active else 'Reactivate' }}</button>
+        </form>
+      </td>
+      <td>
+        <form method="post" action="/admin/users/{{ u.id }}/password" class="inline">
+          <input name="password" placeholder="New temporary password" minlength="{{ min_password }}" autocomplete="off" required aria-label="New password">
+          <button class="btn">Reset</button>
+        </form>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

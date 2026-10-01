@@ -44,3 +44,24 @@ td.r,th.r{ text-align:right; }
 .empty{ background:#fff; border:1px dashed var(--navy-300); border-radius:6px; padding:28px; color:var(--ink-muted); }
 .search{ width:100%; max-width:360px; padding:9px 12px; border:1px solid var(--border); border-radius:4px; font:inherit; margin-bottom:16px; }
 @media (max-width:640px){ header.top{ padding:0 16px; } header.top .feed{ display:none; } header.top img{ height:28px; } }
+/* ---------- accounts & forms ---------- */
+.usermenu{ display:flex; align-items:center; gap:14px; font-size:12px; }
+.usermenu a{ color:var(--navy); }
+.usermenu form{ margin:0; }
+.linkbtn{ background:none; border:0; padding:0; font:inherit; color:var(--ink-subtle); cursor:pointer; text-decoration:underline; }
+.ok{ background:#ECFDF3; color:#067647; border-bottom:1px solid #ABEFC6; padding:10px 24px; font-size:13px; }
+.narrow{ max-width:420px; margin:40px auto; }
+.form{ display:grid; gap:14px; margin-bottom:24px; }
+.form.row{ grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); align-items:end; }
+.form label{ display:grid; gap:6px; font-size:11px; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:var(--navy); }
+.form small{ font-size:12px; font-weight:400; letter-spacing:0; text-transform:none; color:var(--ink-subtle); }
+input,select,textarea{ font:14px 'Poppins',sans-serif; color:var(--navy); background:#fff; border:1px solid #C5CDD8; border-radius:4px; padding:9px 12px; width:100%; }
+input:focus,select:focus,textarea:focus{ outline:3px solid rgba(139,158,183,.45); border-color:var(--navy-300); }
+td input,td select{ padding:6px 8px; font-size:13px; }
+form.inline{ display:flex; gap:6px; align-items:center; margin:0; }
+form.inline input{ min-width:140px; }
+.card{ background:#fff; border:1px solid var(--border); border-radius:6px; padding:18px; }
+.cardhead{ font-size:14px; }
+.muted{ color:var(--ink-subtle); font-weight:400; }
+tr.off td{ opacity:.55; }
+button.btn{ cursor:pointer; }

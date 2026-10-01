@@ -12,11 +12,20 @@
   <a href="/"><img src="/static/logo-navy.png" alt="Sandlin Homes"></a>
   <a href="/" class="name">Marketing Studio</a>
   <span class="sp"></span>
-  <span class="feed">
+  {% if feed %}<span class="feed">
     {% if feed.fetched_at %}BDX feed updated {{ 'just now' if feed.age_min < 1 else feed.age_min ~ ' min ago' }}{% else %}BDX feed not loaded{% endif %}
-  </span>
+  </span>{% endif %}
+  {% if user %}
+  <nav class="usermenu">
+    {% if is_admin %}<a href="/admin/users">Users</a>{% endif %}
+    <a href="/account" title="Your account">{{ user.name }} <span class="chip">{{ ROLE_LABELS[user.role] }}</span></a>
+    <form method="post" action="/logout"><button class="linkbtn">Sign out</button></form>
+  </nav>
+  {% endif %}
 </header>
-{% if feed.error %}
+{% if msg %}<div class="ok">{{ msg }}</div>{% endif %}
+{% if err %}<div class="warn">{{ err }}</div>{% endif %}
+{% if feed and feed.error %}
 <div class="warn">
   {% if feed.fetched_at %}Couldn't refresh the BDX feed ({{ feed.error }}). Showing data from {{ feed.age_min }} min ago.
   {% else %}Couldn't load the BDX feed: {{ feed.error }}{% endif %}

@@ -5,6 +5,7 @@
 <h1 style="margin-top:8px">{{ c.name }}</h1>
 <p class="sub">{{ city_line(c.city, c.state, c.zip) }}{% if c.status %} &middot; <span class="chip">{{ c.status | status }}</span>{% endif %}{% if c.tier == "signature" %} <span class="chip sig">Signature</span>{% endif %}</p>
 
+{% if can_edit %}<p><a class="btn" href="/c/{{ c.slug }}/edit">Edit flyer inputs</a></p>{% endif %}
 <h2>Community Flyers</h2>
 <div class="grid">
   {% for f, reason in flyers %}

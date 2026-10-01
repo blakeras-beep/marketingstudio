@@ -10,9 +10,9 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 
-from . import bdx, config, fmt, images, store
+from . import accounts, auth, bdx, db, edit, images, inputs, store
+from .web import templates
 from .flyers import (
     COMMUNITY_FLYERS, FLYERS_BY_KEY, HOME_FLYER, GRID_CARDS, PLAN_ROWS, PRICING_ROWS,
     paginate, sorted_homes, sorted_plans,
@@ -23,11 +23,35 @@ log = logging.getLogger("marketingstudio")
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 app = FastAPI(title="Sandlin Marketing Studio", docs_url=None, redoc_url=None)
 app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
-templates = Jinja2Templates(directory=HERE / "templates")
-templates.env.filters.update(fmt.FILTERS)
-templates.env.globals.update(img=images.src)
-templates.env.globals.update(DASH=fmt.DASH, READY=fmt.READY, DISCLAIMER=config.DISCLAIMER,
-                             city_line=fmt.city_line, plan_label=fmt.plan_label)
+
+# Everything requires a signed-in user except sign-in itself, static assets and health checks.
+PUBLIC_PREFIXES = ("/static/",)
+PUBLIC_PATHS = {"/login", "/livez", "/healthz", "/healthz/images", "/favicon.ico"}
+
+
+@app.on_event("startup")
+def _startup() -> None:
+    db.init()
+    note = auth.bootstrap_admin()
+    if note:
+        log.warning(note)
+
+
+@app.middleware("http")
+async def _auth_gate(request: Request, call_next):
+    request.state.user = auth.user_for_token(request.cookies.get(auth.COOKIE))
+    path = request.url.path
+    if request.state.user is None and path not in PUBLIC_PATHS and not path.startswith(PUBLIC_PREFIXES):
+        if path.startswith(("/api/", "/img")):
+            return JSONResponse({"detail": "Sign in required"}, status_code=401)
+        from urllib.parse import quote
+        nxt = path + (f"?{request.url.query}" if request.url.query else "")
+        return RedirectResponse(f"/login?next={quote(nxt)}", status_code=303)
+    return await call_next(request)
+
+
+app.include_router(accounts.router)
+app.include_router(edit.router)   # before /c/{slug}/{key} so "edit" isn't read as a flyer key
 
 
 def _feed_banner(st: bdx.FeedState) -> dict:
@@ -219,6 +243,7 @@ def api_community(slug: str):
 
 
 @app.post("/api/refresh")
-def api_refresh():
+def api_refresh(request: Request):
+    auth.require(request, "admin", "marketing")
     st = bdx.state(force=True)
     return {"communities": len(st.communities), "fetched_at": st.fetched_at, "error": st.error}

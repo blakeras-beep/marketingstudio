@@ -1,0 +1,53 @@
+{% extends "_shell.html" %}
+{% block title %}Edit {{ c.name }} · Sandlin Marketing Studio{% endblock %}
+{% block main %}
+<a href="/c/{{ c.slug }}" style="font-size:12px;color:var(--ink-subtle)">&larr; {{ c.name }}</a>
+<h1 style="margin-top:8px">Flyer inputs · {{ c.name }}</h1>
+<p class="sub">Facts the BDX feed and Blueprint don't carry. Prices, specs, photos and status still come from the feed and Blueprint and can't be edited here.
+{% if last %}<br><span class="muted">Last change {{ last.updated_at[:16].replace('T', ' ') }} UTC{% if last.name %} by {{ last.name }}{% endif %}.</span>{% endif %}</p>
+
+<h2 id="community">Community facts</h2>
+<form method="post" action="/c/{{ c.slug }}/edit/community" class="form card">
+  {% for f in F.COMMUNITY_FIELDS %}
+  <label>{{ f.label }}
+    {% if f.kind == 'lines' %}<textarea name="{{ f.key }}" rows="5">{{ vals.get('community', cs, f.key) or '' }}</textarea>
+    {% else %}<input name="{{ f.key }}" value="{{ vals.get('community', cs, f.key) or '' }}">{% endif %}
+    {% if f.hint %}<small>{{ f.hint }}</small>{% endif %}
+  </label>
+  {% endfor %}
+  <button class="btn primary">Save community facts</button>
+</form>
+
+<h2 id="plans">Plans · bed and bath ranges</h2>
+<form method="post" action="/c/{{ c.slug }}/edit/plans">
+<div class="scroll">
+<table>
+  <thead><tr><th>Plan</th><th>Feed beds / baths</th>{% for f in F.PLAN_FIELDS %}<th>{{ f.label }}</th>{% endfor %}</tr></thead>
+  <tbody>
+  {% for p in plans %}{% set ps = plan_subject(p) %}{% set pi = loop.index0 %}
+    <tr>
+      <td>{{ p.name | text }}</td>
+      <td>{{ p.beds | num }} / {{ p.baths | baths(p.half_baths) }}</td>
+      {% for f in F.PLAN_FIELDS %}<td><input name="{{ pi }}.{{ f.key }}" value="{{ vals.get('plan', ps, f.key) or '' }}" placeholder="{{ f.hint }}" aria-label="{{ p.name }} {{ f.label }}"></td>{% endfor %}
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+<button class="btn primary" style="margin-top:12px">Save plan ranges</button>
+</form>
+
+<h2 id="homes">Homes · feature bullets</h2>
+{% for h in homes %}
+<form method="post" action="/c/{{ c.slug }}/edit/homes/{{ h.slug }}" class="form card" id="home-{{ h.slug }}">
+  <div class="cardhead"><strong>{{ h.address or h.id }}</strong> <span class="muted">{{ h.plan | text }} · {{ h.price | money }}</span></div>
+  {% for f in F.HOME_FIELDS %}
+  <label>{{ f.label }}<textarea name="{{ f.key }}" rows="5">{{ vals.get('home', h.id, f.key) or '' }}</textarea>
+    {% if f.hint %}<small>{{ f.hint }}</small>{% endif %}</label>
+  {% endfor %}
+  <button class="btn primary">Save</button>
+</form>
+{% else %}
+<div class="empty">No homes for {{ c.name }} in the feed right now.</div>
+{% endfor %}
+{% endblock %}

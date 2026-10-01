@@ -1,4 +1,6 @@
 """Image proxy and photo store (no network: urlopen is mocked, R2 is stubbed)."""
+import os
+os.environ.setdefault("COOKIE_SECURE", "0")
 import io
 import unittest
 from unittest import mock
@@ -79,9 +81,19 @@ def _r2(public=""):
     return store.R2Store(client=client), Stubber(client), patches
 
 
+def _signed_in_client():
+    """Every route but sign-in and health checks requires an account."""
+    from app import auth, db
+    db.reset_for_tests()
+    auth.create_user("viewer@test.local", "Viewer", "csm", "viewer-password-1", None)
+    c = TestClient(main.app, base_url="http://testserver")
+    c.post("/login", data={"email": "viewer@test.local", "password": "viewer-password-1"})
+    return c
+
+
 class R2Test(unittest.TestCase):
     def setUp(self):
-        self.client = TestClient(main.app)
+        self.client = _signed_in_client()
         self.url = "/img?u=" + SRC + "&w=1000"
         self.key = store.R2_PREFIX + images.cache_key(SRC, 1000, None, False)
 
@@ -159,7 +171,7 @@ class SetupTest(unittest.TestCase):
             s = store.get_store()
             self.assertEqual(s.name, "memory")
             self.assertIn("Invalid endpoint", store.setup_error)
-            r = TestClient(main.app).get("/healthz/images")
+            r = _signed_in_client().get("/healthz/images")
         self.assertIn(r.status_code, (200, 503))  # never a bare 500
         self.assertIn("Invalid endpoint", r.json()["r2_setup_error"])
 

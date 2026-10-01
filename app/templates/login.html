@@ -1,0 +1,14 @@
+{% extends "_shell.html" %}
+{% block title %}Sign in · Sandlin Marketing Studio{% endblock %}
+{% block main %}
+<div class="narrow">
+  <h1>Sign in</h1>
+  <p class="sub">Use the email and password your admin set up for you.</p>
+  <form method="post" action="/login" class="form">
+    <input type="hidden" name="next" value="{{ next }}">
+    <label>Email<input type="email" name="email" autocomplete="username" required autofocus></label>
+    <label>Password<input type="password" name="password" autocomplete="current-password" required></label>
+    <button class="btn primary">Sign in</button>
+  </form>
+</div>
+{% endblock %}
