@@ -1,4 +1,16 @@
 {% extends "flyers/_base.html" %}
+{% block tools %}{% if can_edit %}<button type="button" class="edit" onclick="document.body.classList.toggle('editing')">Edit bullets</button>{% endif %}{% endblock %}
+{% block panel %}{% if can_edit %}
+<form class="edit-panel" method="post" action="/c/{{ c.slug }}/homes/{{ h.slug }}/edit">
+  <div class="ep-head"><strong>{{ h.address or h.id }}</strong><button type="button" onclick="document.body.classList.remove('editing')" aria-label="Close">&times;</button></div>
+  {% for f in F.HOME_FIELDS %}
+  <label>{{ f.label }}<textarea name="{{ f.key }}" rows="10">{{ vals.get('home', h.id, f.key) or '' }}</textarea></label>
+  {% if f.hint %}<small>{{ f.hint }}. Everything else on this flyer comes from the feed and Blueprint.</small>{% endif %}
+  {% endfor %}
+  <button class="save">Save</button>
+</form>
+<script>if (location.hash === '#edit') document.body.classList.add('editing');</script>
+{% endif %}{% endblock %}
 {# Matches reference/flyers/<Community>/Inventory Flyers/<address>_Inventory_<date>.pdf (Canva, 2 pages). #}
 {% block pages %}
 {% set ct = c.contact %}{% set agent = ct.agents[0] if ct.agents else None %}

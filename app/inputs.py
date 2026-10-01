@@ -34,6 +34,7 @@ COMMUNITY_FIELDS = [
     Field("tax_rate", "Tax rate", hint="Shown only when Blueprint has no tax rate, e.g. 1.909%"),
     Field("utilities", "Utility providers", "lines", "One per line, e.g. Water & Sewer: Denton"),
     Field("attractions", "Attractions", "lines", "One per line"),
+    Field("attractions_heading", "Attractions heading", hint="Blank = Attractions; e.g. Amenities, Nearby Amenities"),
     Field("standard_features", "Standard Features", "features",
           "Sections start with '# ', bullets with '- '. Wrap brand names in **double stars** for bold. "
           "A line with just === starts a new page. "

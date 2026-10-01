@@ -219,7 +219,7 @@ def plan_flyer(request: Request, slug: str, plan: str):
 
 
 @app.get("/c/{slug}/homes/{home}", response_class=HTMLResponse)
-def home_flyer(request: Request, slug: str, home: str):
+def home_flyer(request: Request, slug: str, home: str, msg: str = ""):
     c = _community_or_404(slug)
     h = c.home(home)
     if h is None:
@@ -228,6 +228,7 @@ def home_flyer(request: Request, slug: str, home: str):
         "c": c, "h": h, "flyer": HOME_FLYER, "today": date.today(),
         "doc_title": _doc_title(c, h.address or h.id),
         "back": f"/c/{c.slug}", **_flyer_ctx(c),
+        "F": inputs, "msg": msg if msg in ("Saved.", "No changes.") else "",   # only our own notes, never echoed text
     })
 
 

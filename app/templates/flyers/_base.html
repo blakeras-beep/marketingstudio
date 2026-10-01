@@ -13,8 +13,11 @@
   <span class="t">{{ flyer.title }}</span>
   <span class="live">Live from the BDX feed &middot; {{ today.strftime('%b %-d, %Y') }}</span>
   <span class="sp"></span>
+  {% if msg %}<span class="msg">{{ msg }}</span>{% endif %}
+  {% block tools %}{% endblock %}
   <button id="pdf" disabled onclick="window.print()">Download PDF</button>
 </div>
+{% block panel %}{% endblock %}
 <div class="overflow-warn">A page's content runs past its edge and would be cut off in print (outlined in red). Tell marketing which community and flyer.</div>
 <div class="pages">
 {% block pages %}{% endblock %}

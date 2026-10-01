@@ -58,34 +58,85 @@ def clean(t: str) -> str:
 
 # ---------------------------------------------------------------- community info (Canva)
 
+HEADINGS = {"community info": None, "schools": None, "utility providers": "utilities",
+            "attractions": "attractions", "amenities": "attractions", "nearby amenities": "attractions"}
+FACT = re.compile(r"^(HOA|Tax Rate|Property Tax|Lot Size)\s*[:\-]\s*(.+)$", re.I)
+FACT_KEY = {"hoa": "hoa", "tax rate": "tax_rate", "property tax": "tax_rate", "lot size": "lot_size"}
+CONTINUES = re.compile(r"(\b(to|of|and|at|in|&)|[-,&])$", re.I)   # a list line ending like this wraps
+LONE_WORD = {"school", "airport", "park", "center", "lake", "trail", "arlington"}
+
+
+def _text(line) -> str:
+    """Spans of one line joined, with a space where the PDF left a gap between them."""
+    out, last = "", None
+    for s in sorted(line, key=lambda s: s[0]):
+        out += (" " if last is not None and s[0] - last > 1.5 and not out.endswith(" ") else "") + s[4]
+        last = s[2]
+    return clean(out)
+
+
+def _description(page) -> list[str]:
+    """The left column's body copy, as paragraphs (a paragraph break is a blank line's gap)."""
+    sp = [s for s in spans(page) if s[0] < 380 and 430 < s[1] < 725 and s[7] == 0 and s[6] < 12.5]
+    paras: list[str] = []
+    last_y = None
+    for line in lines_of(sp):
+        text, y = _text(line), line[0][1]
+        if last_y is None or y - last_y > 25:
+            paras.append(text)
+        else:
+            paras[-1] += ("" if paras[-1].endswith("-") else " ") + text
+        last_y = y
+    return [p for p in paras if len(p) > 40]
+
+
 def community_info(pdf: Path) -> dict:
+    """Facts, lists and description from a Canva Community Info sheet (current and older layout)."""
     page = pymupdf.open(pdf)[0]
     sp = [s for s in spans(page) if s[0] > 385 and s[1] > 340 and s[7] == 0xFFFFFF]
-    sections: dict[str, list[str]] = {}
-    current = None
-    for line in lines_of(sp):
-        text = clean("".join(s[4] for s in line))
-        size = line[0][6]
-        if size >= 13.5 and text.isupper():
-            current = text
-            sections[current] = []
-        elif current:
-            sections[current].append(text)
+    # current layout: every list item starts at a small round bullet drawn to its left
+    bullets = sorted(d["rect"].y0 for d in page.get_drawings() if d["rect"].width < 6 and d["rect"].x0 > 385)
     out: dict = {}
-    # "HOA: $900/year" (current layout) or "HOA- $650 / biannually" (older layout), anywhere in the column.
-    # Lists are only taken from the current, bulleted layout: the older one wraps items across
-    # lines with no bullets, so item boundaries can't be read reliably.
+    current, items = None, {}
     for line in lines_of(sp):
-        item = clean("".join(s[4] for s in line))
-        m = re.match(r"^(HOA|Tax Rate|Lot Size)\s*[:\-]\s*(.+)$", item, re.I)
-        if m:
-            key = {"hoa": "hoa", "tax rate": "tax_rate", "lot size": "lot_size"}[m.group(1).lower()]
-            out.setdefault(key, m.group(2).strip().rstrip(",;").strip())
-    if sections.get("UTILITY PROVIDERS"):
-        out["utilities"] = sections["UTILITY PROVIDERS"]
-    if sections.get("ATTRACTIONS"):
-        out["attractions"] = sections["ATTRACTIONS"]
+        text, y = _text(line), line[0][1]
+        fact = FACT.match(text)
+        if fact:
+            out.setdefault(FACT_KEY[fact.group(1).lower()], fact.group(2).strip().rstrip(",;").strip())
+            continue
+        if text.lower() in HEADINGS:
+            current = text
+            items[current] = []
+            continue
+        if current is None:
+            continue
+        lst = items[current]
+        if bullets:
+            starts = any(-6 < (b - y) < 14 for b in bullets)
+            wraps = lst and not starts
+        else:   # older layout, no bullets: only an obvious wrap joins the line above
+            wraps = lst and (CONTINUES.search(lst[-1]) or text.lower() in LONE_WORD or text[:1].islower())
+        if wraps:
+            lst[-1] = lst[-1] + ("" if lst[-1].endswith("-") and not lst[-1].endswith(" -") else " ") + text
+        else:
+            lst.append(text)
+    for heading, lst in items.items():
+        key = HEADINGS[heading.lower()]
+        if key and lst and key not in out:
+            out[key] = lst
+            if key == "attractions" and heading.lower() != "attractions":
+                out["attractions_heading"] = heading.title()
+    desc = _description(page)
+    if desc:
+        out["description"] = desc
     return out
+
+
+def is_community_info(pdf: Path) -> bool:
+    try:
+        return "Community Info" in pymupdf.open(pdf)[0].get_text()
+    except Exception:
+        return False
 
 
 # ---------------------------------------------------------------- standard features (Word)
@@ -245,7 +296,7 @@ def main() -> int:
     for folder in sorted(p for p in REF.iterdir() if p.is_dir() and not p.name.startswith("_")):
         name = folder.name
         com: dict = {}
-        for pdf in sorted((folder / "Community Info").glob("*Community Info*.pdf")):
+        for pdf in sorted(p for p in (folder / "Community Info").glob("*.pdf") if is_community_info(p)):
             try:
                 com.update({k: v for k, v in community_info(pdf).items() if v})
                 seed["sources"].append(str(pdf.relative_to(ROOT)))

@@ -61,6 +61,7 @@
       <td>{{ h.move_in | move_in }}</td>
       <td class="r">{{ h.price | money }}</td>
       <td class="r" style="white-space:nowrap">
+        {% if can_edit %}<a class="btn" href="/c/{{ c.slug }}/homes/{{ h.slug }}#edit">Edit</a>{% endif %}
         <a class="btn" href="/c/{{ c.slug }}/homes/{{ h.slug }}">Preview</a>
         <a class="btn primary" href="/c/{{ c.slug }}/homes/{{ h.slug }}?print=1">PDF</a>
       </td>

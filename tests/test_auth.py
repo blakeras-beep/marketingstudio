@@ -72,6 +72,8 @@ class AuthTest(unittest.TestCase):
         self.assertNotIn("Edit flyer inputs", csm.get("/c/fixture-park").text)
         self.assertEqual(csm.get("/c/fixture-park/edit").status_code, 403)
         self.assertEqual(csm.post("/c/fixture-park/edit/community", data={"lot_size": "x"}).status_code, 403)
+        self.assertEqual(csm.post("/c/fixture-park/homes/1-test-way/edit", data={"features": "x"}).status_code, 403)
+        self.assertNotIn("Edit bullets", csm.get("/c/fixture-park/homes/1-test-way").text)
         self.assertEqual(csm.get("/admin/users").status_code, 403)
         self.assertEqual(csm.post("/admin/users", data={}).status_code, 403)
 
@@ -87,8 +89,15 @@ class AuthTest(unittest.TestCase):
         self.assertEqual(vals.lines("community", "SUB1", "utilities"), ["Water: City", "Gas: Atmos"])
         mkt.post("/c/fixture-park/edit/plans", data={"0.beds_range": "3 - 4"})
         self.assertEqual(inputs.load().get("plan", "SUB1|Alpha", "beds_range"), "3 - 4")
-        mkt.post("/c/fixture-park/edit/homes/1-test-way", data={"features": "Island\nPatio"})
+        # a home is edited from its own flyer, and the save lands back on it
+        flyer = mkt.get("/c/fixture-park/homes/1-test-way").text
+        self.assertIn("Edit bullets", flyer)
+        self.assertIn('action="/c/fixture-park/homes/1-test-way/edit"', flyer)
+        r = mkt.post("/c/fixture-park/homes/1-test-way/edit", data={"features": "Island\nPatio"}, follow_redirects=False)
+        self.assertTrue(r.headers["location"].startswith("/c/fixture-park/homes/1-test-way?msg="))
         self.assertEqual(inputs.load().lines("home", "S1", "features"), ["Island", "Patio"])
+        self.assertIn("Saved.", mkt.get(r.headers["location"]).text)
+        self.assertNotIn("Hacked", mkt.get("/c/fixture-park/homes/1-test-way?msg=Hacked").text)   # only our own notes show
         mkt.post("/c/fixture-park/edit/community", data={"lot_size": ""})   # blank clears
         self.assertIsNone(inputs.load().get("community", "SUB1", "lot_size"))
         self.assertEqual(mkt.get("/admin/users").status_code, 403)

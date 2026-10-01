@@ -59,17 +59,5 @@
 <button class="btn primary">Save all plans</button>
 </form>
 
-<h2 id="homes">Homes · feature bullets</h2>
-{% for h in homes %}
-<form method="post" action="/c/{{ c.slug }}/edit/homes/{{ h.slug }}" class="form card" id="home-{{ h.slug }}">
-  <div class="cardhead"><strong>{{ h.address or h.id }}</strong> <span class="muted">{{ h.plan | text }} · {{ h.price | money }}</span></div>
-  {% for f in F.HOME_FIELDS %}
-  <label>{{ f.label }}<textarea name="{{ f.key }}" rows="5">{{ vals.get('home', h.id, f.key) or '' }}</textarea>
-    {% if f.hint %}<small>{{ f.hint }}</small>{% endif %}</label>
-  {% endfor %}
-  <button class="btn primary">Save</button>
-</form>
-{% else %}
-<div class="empty">No homes for {{ c.name }} in the feed right now.</div>
-{% endfor %}
+<p class="muted" id="homes">A home's feature bullets are edited on its own flyer: open the home from the community page and use <strong>Edit bullets</strong>.</p>
 {% endblock %}

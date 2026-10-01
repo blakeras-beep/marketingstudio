@@ -14,7 +14,7 @@
 {% set school_items = [sch.elementary, sch.middle, sch.high] | select | list %}
 {% set sections = [('COMMUNITY INFO', info_items), ('SCHOOLS', school_items),
                    ('UTILITY PROVIDERS', vals.lines('community', cs, 'utilities')),
-                   ('ATTRACTIONS', vals.lines('community', cs, 'attractions'))] %}
+                   ((vals.get('community', cs, 'attractions_heading') or 'Attractions') | upper, vals.lines('community', cs, 'attractions'))] %}
 <section class="sheet fi">
   <div class="a band"></div>
   <img class="a" src="/static/brand/logo-white-wide.png" alt="Sandlin Homes" style="left:21pt;top:17.6pt;width:205.5pt;height:40.5pt">
@@ -39,18 +39,18 @@
   </div>
 
   <div class="a side"></div>
-  <div class="a facts" data-fit data-autofit="10" data-autofit-h data-autofit-lh="1.56">
+  <div class="a facts" data-fit data-autofit="9" data-autofit-h>
     {% for title, items in sections if items %}
     <h4>{{ title }}</h4>
-    <ul>{% for it in items %}<li data-autofit="9">{{ it }}</li>{% endfor %}</ul>
+    <ul>{% for it in items %}<li>{{ it }}</li>{% endfor %}</ul>
     {% endfor %}
   </div>
 
   <div class="a contact"></div>
-  <div class="a ct" style="left:16.8pt;top:730pt;width:200pt">
+  <div class="a ct nowrap" style="left:16.8pt;top:730pt;width:182pt" data-autofit="9">
     <b>MODEL ADDRESS</b>{{ (ct.street or c.street) | text }}<br>{{ city_line(ct.city or c.city, ct.state or c.state, ct.zip or c.zip) }}
   </div>
-  <div class="a ct r nowrap" style="right:233.5pt;top:730pt;width:200pt" data-autofit="9">
+  <div class="a ct r nowrap" style="right:233.5pt;top:730pt;width:176pt" data-autofit="9">
     <b>{{ (agent or 'Sales Office') | upper }}</b>{{ ct.phone | text }}<br>{{ ct.email | text }}
   </div>
   <img class="a" src="/static/brand/eho-white.png" alt="Equal Housing Opportunity" style="left:557.1pt;top:732.1pt;width:34.5pt;height:36.7pt">

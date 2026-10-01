@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from . import auth, bdx, blueprint, inputs
-from .flyers import sorted_homes, sorted_plans
+from .flyers import sorted_plans
 from .web import templates
 
 router = APIRouter()
@@ -32,7 +32,7 @@ def edit_page(request: Request, slug: str, msg: str = ""):
     cs = inputs.community_subject(c)
     return templates.TemplateResponse(request, "edit.html", {
         "c": c, "msg": msg, "vals": vals, "cs": cs,
-        "plans": sorted_plans(c), "homes": sorted_homes(c),
+        "plans": sorted_plans(c),
         "plan_subject": lambda p: inputs.plan_subject(c, p.name or ""),
         "F": inputs, "last": inputs.last_edit("community", [cs]),
         "bp": blueprint.current(),
@@ -71,8 +71,9 @@ async def save_plans(request: Request, slug: str):
     return _done(c.slug, "plans", n)
 
 
-@router.post("/c/{slug}/edit/homes/{home}")
+@router.post("/c/{slug}/homes/{home}/edit")
 async def save_home(request: Request, slug: str, home: str):
+    """Saved from the home's own flyer (the Edit panel), and back to it."""
     if not auth.same_origin(request):
         raise HTTPException(403, "Cross-site form posts are not allowed")
     user = auth.require(request, *EDITORS)
@@ -82,4 +83,5 @@ async def save_home(request: Request, slug: str, home: str):
         raise HTTPException(404, "That home is no longer in the feed")
     form = await request.form()
     n = inputs.save("home", h.id, {f.key: form.get(f.key, "") for f in inputs.HOME_FIELDS}, user["id"])
-    return _done(c.slug, f"home-{h.slug}", n)
+    msg = "No changes." if n == 0 else "Saved."
+    return RedirectResponse(f"/c/{c.slug}/homes/{h.slug}?msg={msg}", status_code=303)

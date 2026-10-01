@@ -32,9 +32,22 @@ img{ display:block; }
   box-shadow:0 2px 16px rgba(0,0,0,.25); color:#000; }
 .sheet .a{ position:absolute; }
 .sheet.overflowing{ outline:4px solid #B42318; }
+.toolbar .msg{ color:#fff; font-size:12px; background:#2e7d32; padding:3px 8px; border-radius:3px; }
+.toolbar button.edit{ background:transparent; color:#fff; border:1px solid #BDC9D9; }
+.edit-panel{ display:none; position:fixed; top:56px; right:16px; width:340px; max-height:calc(100vh - 72px); overflow:auto; z-index:20;
+  background:#fff; color:#1b2a41; border:1px solid #c9ced6; border-radius:6px; box-shadow:0 8px 30px rgba(0,0,0,.25);
+  padding:14px; font:14px/1.4 'Poppins',sans-serif; }
+body.editing .edit-panel{ display:block; }
+.edit-panel .ep-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.edit-panel .ep-head button{ border:0; background:none; font-size:22px; cursor:pointer; line-height:1; }
+.edit-panel label{ display:block; font-weight:600; font-size:13px; }
+.edit-panel textarea{ display:block; width:100%; box-sizing:border-box; margin-top:6px; font:13px/1.5 'Poppins',sans-serif; padding:8px; }
+.edit-panel small{ display:block; color:#5b6b80; font-size:11.5px; margin:6px 0 10px; }
+.edit-panel .save{ font:600 12px 'Poppins',sans-serif; letter-spacing:.12em; text-transform:uppercase; background:#002147; color:#fff;
+  border:0; padding:9px 18px; border-radius:3px; cursor:pointer; }
 @media print{
   body{ background:#fff; }
-  .toolbar,.overflow-warn{ display:none !important; }
+  .toolbar,.overflow-warn,.edit-panel{ display:none !important; }
   .pages{ padding:0; }
   .sheet{ margin:0; box-shadow:none; break-after:page; }
   .sheet:last-child{ break-after:auto; }
@@ -57,12 +70,14 @@ img{ display:block; }
 .fi .subt{ right:24.6pt; top:58.5pt; font:16pt/1.64 'Poppins',sans-serif; color:var(--gray); white-space:nowrap; }
 .fi .body{ left:20.3pt; top:459pt; width:345pt; height:262pt; font:12pt/17.25pt 'Poppins',sans-serif; overflow:hidden; }
 .fi .body p{ margin:0 0 17.25pt; }
+.fi .body p:last-child{ margin-bottom:0; }
 .fi .side{ left:383.7pt; top:350.5pt; width:228.3pt; height:441.5pt; background:var(--navy-info); }
-.fi .facts{ left:396.8pt; top:366.5pt; width:205pt; height:420pt; color:#fff; overflow:hidden; }
-.fi .facts h4{ margin:0; font:400 14pt/22.9pt 'Poppins',sans-serif; letter-spacing:0; }
+.fi .facts{ left:396.8pt; top:366.5pt; width:205pt; height:362pt; color:#fff; overflow:hidden; font-size:13pt; }   /* ends above the EHO mark */
+/* sizes in em of the column, so the column's auto-fit shrinks headings, items and bullets together */
+.fi .facts h4{ margin:0; font-weight:400; font-size:1.0769em; line-height:1.636; font-family:'Poppins',sans-serif; letter-spacing:0; }
 .fi .facts ul{ margin:0 0 0; padding:0; list-style:none; }
-.fi .facts li{ position:relative; padding-left:22.1pt; font:13pt/20.25pt 'Poppins',sans-serif; white-space:nowrap; overflow:hidden; }
-.fi .facts li:before{ content:""; position:absolute; left:8.3pt; top:8.1pt; width:4.5pt; height:4.5pt; border-radius:50%; background:#fff; }
+.fi .facts li{ position:relative; padding-left:1.7em; font-family:'Poppins',sans-serif; line-height:1.5577; }   /* long items wrap, like the originals */
+.fi .facts li:before{ content:""; position:absolute; left:.638em; top:.623em; width:.346em; height:.346em; border-radius:50%; background:#fff; }
 .fi .contact{ left:0; top:725pt; width:383.9pt; height:67pt; background:var(--gray); }
 .fi .ct{ font:13pt/13.5pt 'Poppins',sans-serif; color:#000; }
 .fi .ct b{ font-weight:600; display:block; margin-bottom:2.2pt; }
