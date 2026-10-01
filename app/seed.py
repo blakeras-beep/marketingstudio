@@ -10,7 +10,7 @@ import json
 import re
 from pathlib import Path
 
-from . import bdx, inputs
+from . import db, bdx, inputs
 
 SEED = Path(__file__).parent / "seed" / "reference_inputs.json"
 ROMAN = {"i": "1", "ii": "2", "iii": "3", "iv": "4"}
@@ -51,15 +51,30 @@ def run(user_id: int) -> dict:
 
     dated = data.get("dated", {})
 
+    def untouched_import(scope, subject, key, stamp) -> bool:
+        """The current value is still the one an import wrote: it carries the import's stamp
+        (the sheet's date at 12:00 UTC), which an edit made in the Studio never does."""
+        with db.connect() as conn:
+            row = conn.one("SELECT updated_at FROM inputs WHERE scope = ? AND subject = ? AND field = ?",
+                           (scope, subject, key))
+        return bool(row) and row["updated_at"] == stamp
+
     def fill(scope, subject, values: dict, folder: str | None = None) -> int:
         """Empty fields only. A field taken from a dated sheet (features, elevation prices) is
-        stamped with that sheet's date, so "effective" on the flyer is the original's date."""
-        empty = {k: v for k, v in values.items() if v and not vals.get(scope, subject, k)}
+        stamped with that sheet's date, so "effective" on the flyer is the original's date; such a
+        field is also refreshed when nobody has edited it since it was imported (a better read of
+        the same sheet), never when marketing has."""
         when = dated.get(folder or "", {})
         n = 0
         for key in ("standard_features", "elevations"):
-            if key in empty and when.get(key):
-                n += inputs.save(scope, subject, {key: empty.pop(key)}, user_id, at=when[key] + "T12:00:00+00:00")
+            new = values.get(key)
+            if not new or not when.get(key):
+                continue
+            stamp = when[key] + "T12:00:00+00:00"
+            if not vals.get(scope, subject, key) or untouched_import(scope, subject, key, stamp):
+                n += inputs.save(scope, subject, {key: new}, user_id, at=stamp)
+            values = {k: v for k, v in values.items() if k != key}
+        empty = {k: v for k, v in values.items() if v and not vals.get(scope, subject, k)}
         return n + (inputs.save(scope, subject, empty, user_id) if empty else 0)
 
     def as_text(v):

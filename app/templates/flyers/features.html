@@ -7,10 +7,12 @@
   <div class="a fx-head" style="left:0;top:0;width:612pt;height:153pt">
     <img class="cover bg" src="{{ img(hero, 8.5) or '/static/placeholder.svg' }}" alt="">
     <div class="wash"></div>
-    <div class="ttl" style="left:34pt;top:56pt;font-size:44pt;font-weight:500" data-autofit="26">{{ c.name }}</div>
+    {# long names wrap to two lines left of the logo, like the Rio Vista original; set on the bottom line #}
+    <div class="ttl" style="left:34pt;top:14pt;width:300pt;height:84pt;padding-bottom:10pt;display:flex;align-items:flex-end;white-space:normal;font-size:44pt;line-height:.92;font-weight:500" data-autofit="26" data-autofit-h>{{ c.name }}</div>
     <div class="a" style="left:35pt;top:113pt;width:150pt;height:1.5pt;background:#c9ced6"></div>
     <div class="sub" style="left:35pt;top:124pt;font:12.5pt/1 'Carlito',sans-serif">Standard Features</div>
-    <img class="logo" src="/static/logo-navy.png" alt="Sandlin Homes" style="left:340pt;top:42pt;width:255pt">
+    {% if c.tier == "signature" %}<img class="logo" src="/static/logo-signature.png" alt="Sandlin Signature" style="left:340pt;top:40pt;width:255pt">
+    {% else %}<img class="logo" src="/static/logo-navy.png" alt="Sandlin Homes" style="left:340pt;top:42pt;width:255pt">{% endif %}
   </div>
   <div class="a col" data-ff-col style="left:31.4pt"></div>
   <div class="a col" data-ff-col style="left:327pt"></div>
@@ -29,34 +31,46 @@
 </div>
 <script>
 // Flow headings and bullets into the columns in reading order: page 1 left, page 1 right,
-// page 2 left ... A heading never ends a column on its own. Runs once fonts are loaded (line
-// wraps depend on them), before the page's print-ready check; unused pages are removed.
+// page 2 left ... A heading never ends a column on its own; "===" starts the next page. If a
+// page's sections don't fit on it, the text is set a little smaller (down to 88%) and flowed
+// again, rather than pushing one item onto a page of its own. Runs once fonts are loaded (line
+// wraps depend on them), before the print-ready check; unused pages are removed.
 (document.fonts ? document.fonts.ready : Promise.resolve()).then(function(){
   var cols = Array.prototype.slice.call(document.querySelectorAll('[data-ff-col]'));
-  var items = Array.prototype.slice.call(document.getElementById('ff-source').children);
-  var ci = 0;
+  var source = document.getElementById('ff-source');
+  var items = Array.prototype.slice.call(source.children);
   function over(col){ return col.scrollHeight > col.clientHeight + 0.5; }
-  items.forEach(function(el){
-    if (el.classList.contains('ff-break')) {   // === : continue at the top of the next page
-      if (ci % 2 === 1) ci += 1;                              // on a right column: next page
-      else if (cols[ci] && cols[ci].children.length) ci += 2;  // on a used left column: next page
-      return;
-    }
-    while (ci < cols.length) {
-      var col = cols[ci];
-      col.appendChild(el);
-      if (!over(col)) return;
-      col.removeChild(el);
-      var last = col.lastElementChild;
-      var carry = last && last.classList.contains('ff-h') ? last : null;
-      ci++;
-      if (carry && ci < cols.length) cols[ci].appendChild(carry);
-    }
-  });
+  function flow(k){
+    document.documentElement.style.setProperty('--k', k);
+    items.forEach(function(el){ source.appendChild(el); });
+    var ci = 0, breaks = 0, spilled = false;
+    items.forEach(function(el){
+      if (el.classList.contains('ff-break')) {     // === : continue at the top of the next page
+        if (Math.floor(ci / 2) > breaks) spilled = true;   // this page's sections ran onto the next
+        breaks++;
+        var next = breaks * 2;
+        if (ci < next) ci = next;
+        return;
+      }
+      while (ci < cols.length) {
+        var col = cols[ci];
+        col.appendChild(el);
+        if (!over(col)) return;
+        col.removeChild(el);
+        var last = col.lastElementChild;
+        var carry = last && last.classList.contains('ff-h') ? last : null;
+        ci++;
+        if (carry && ci < cols.length) cols[ci].appendChild(carry);
+      }
+      if (ci >= cols.length) { source.appendChild(el); spilled = true; }
+    });
+    return !spilled && Math.floor(ci / 2) <= breaks;   // the last page's sections fit on it too
+  }
+  for (var k = 1; k >= 0.88 && !flow(k); k = Math.round((k - 0.02) * 100) / 100) {}
   document.querySelectorAll('[data-ff-page]').forEach(function(p){
     if (p.getAttribute('data-ff-page') !== '1' && !p.querySelector('[data-ff-col] > *')) p.remove();
   });
-  if (ci >= cols.length) document.body.classList.add('has-overflow');
+  if (source.querySelector(':scope > :not(.ff-break)')) document.body.classList.add('has-overflow');   // content left unplaced
 });
 </script>
 {% endblock %}

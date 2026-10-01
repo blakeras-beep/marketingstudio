@@ -42,13 +42,24 @@ def lines_of(sp, tol=2.0):
     (superscript ordinals like the 'nd' in 2nd) are grouped with the line they sit on."""
     def bottom(s):
         return s[3] + (5 if s[6] < 9 else 0)
-    sp = sorted(sp, key=lambda s: (round(bottom(s)), s[0]))
+    # bullet glyphs are placed afterwards, on the text line they sit beside: Word sometimes
+    # exports one at a tiny size, whose bottom would otherwise land on the wrong line
+    bullets = [s for s in sp if s[4].strip() == "•"]
+    sp = sorted((s for s in sp if s[4].strip() != "•"), key=lambda s: (round(bottom(s)), s[0]))
     lines: list[list] = []
     for s in sp:
         if lines and abs(bottom(lines[-1][0]) - bottom(s)) <= tol:
             lines[-1].append(s)
         else:
             lines.append([s])
+    for bl in bullets:
+        mid = (bl[1] + bl[3]) / 2
+        best = min(lines, key=lambda l: abs((l[0][1] + l[0][3]) / 2 - mid), default=None)
+        if best is not None and abs((best[0][1] + best[0][3]) / 2 - mid) < 8:
+            best.append(bl)
+        else:
+            lines.append([bl])
+    lines.sort(key=lambda l: min(round(bottom(s)) for s in l))
     return [sorted(l, key=lambda s: s[0]) for l in lines]
 
 
@@ -159,17 +170,31 @@ def standard_features(pdf: Path) -> str:
         if pno:
             flush()
             out.append("===")   # the original starts a new page here
-        sp = [s for s in spans(page) if 160 < s[1] < 735]
-        for col in (lambda s: s[0] < 316, lambda s: s[0] >= 316):
+        # content starts at the page's first section heading (header bands differ between sheets)
+        heads = [s[1] for s in spans(page) if s[5].startswith("Garamond") and s[1] > 100]
+        top = min(heads) - 2 if heads else 160
+        # ...and ends at the italic footer note ("To continuously improve...")
+        foot = [s[1] for s in spans(page) if "Italic" in s[5] and s[1] > 700]
+        bottom = min(foot) - 1 if foot else 742
+        sp = [s for s in spans(page) if top < s[1] < bottom]
+        # the column split differs between sheets (Rio Vista's right column sits further left):
+        # put it just left of the right column's bullets, or its headings when it has none
+        xs = sorted(s[0] for s in sp if s[4].strip() == "•")
+        right = [x for x in xs if xs and x > xs[0] + 150]
+        right += [s[0] for s in sp if s[5].startswith("Garamond") and xs and s[0] > xs[0] + 150]
+        split = min(right) - 6 if right else 316
+        for col in (lambda s, k=split: s[0] < k, lambda s, k=split: s[0] >= k):
             for line in lines_of([s for s in sp if col(s)]):
                 first = line[0]
+                if clean("".join(x[4] for x in line)).isdigit():   # a stray number Word left on the page
+                    continue
                 if first[5].startswith("Garamond") or (first[6] >= 13.5 and clean(first[4]).isupper()):
                     flush()
                     out.append("# " + clean("".join(s[4] for s in line)))
                     continue
                 for s in line:
                     t = s[4]
-                    if s[5].startswith("Symbol") and t.strip() in ("•", ""):
+                    if t.strip() == "•":   # the bullet glyph, whatever its font or size
                         flush()
                         item = []
                         continue
@@ -257,8 +282,15 @@ def elevations(pdf: Path) -> dict[str, list[str]]:
 
 
 def sheet_date(pdf: Path) -> str | None:
-    """'... 5.27.26.pdf' / '..._09.24.26.pdf' / '4.7.25' -> '2026-05-27' (the date in the file name)."""
+    """'... 5.27.26.pdf' / '..._09.24.26.pdf' / '4.7.25' -> '2026-05-27' (the date in the file name),
+    else the date the sheet itself prints ("effective as of 02/15/2024")."""
     m = re.findall(r"(\d{1,2})\.(\d{1,2})\.(\d{2}(?:\d{2})?)(?!\d)", pdf.stem)
+    if not m:
+        try:
+            text = " ".join(page.get_text() for page in pymupdf.open(pdf))
+        except Exception:
+            return None
+        m = re.findall(r"effective(?: as of)?\s+(\d{1,2})/(\d{1,2})/(\d{2}(?:\d{2})?)(?!\d)", text, re.I)
     if not m:
         return None
     mo, d, y = (int(v) for v in m[-1])

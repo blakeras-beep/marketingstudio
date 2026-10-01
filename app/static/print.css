@@ -167,9 +167,11 @@ body.editing .edit-panel{ display:block; }
 
 /* ================= Standard Features (Word original) ================= */
 .ff .col{ top:165pt; width:277pt; height:578pt; overflow:hidden; }
-.ff .ff-h{ margin:0 0 1.5pt; padding-top:0; font:700 14pt/15.8pt 'EB Garamond',serif; color:#002147; letter-spacing:.01em; }
-.ff .ff-h:not(:first-child){ margin-top:14.5pt; }
-.ff .ff-i{ position:relative; padding-left:18pt; margin-bottom:1.5pt; font:12pt/14.6pt 'Carlito',sans-serif; color:#000; }
-.ff .ff-i:before{ content:"•"; position:absolute; left:0; top:-0.6pt; color:#002147; font-size:12pt; }
+/* sizes are multiples of --k, which the flow script lowers a little when a page's text would
+   otherwise spill past its page break (the originals fit each page's sections on that page) */
+.ff .ff-h{ margin:0 0 calc(1.5pt * var(--k,1)); padding-top:0; font:700 calc(14pt * var(--k,1))/calc(15.8pt * var(--k,1)) 'EB Garamond',serif; color:#002147; letter-spacing:.01em; }
+.ff .ff-h:not(:first-child){ margin-top:calc(14.5pt * var(--k,1)); }
+.ff .ff-i{ position:relative; padding-left:18pt; margin-bottom:calc(1.5pt * var(--k,1)); font:calc(12pt * var(--k,1))/calc(14.6pt * var(--k,1)) 'Carlito',sans-serif; color:#000; }
+.ff .ff-i:before{ content:"•"; position:absolute; left:0; top:-0.6pt; color:#002147; font-size:calc(12pt * var(--k,1)); }
 .ff .ff-i b{ font-weight:700; }
 .ff .foot{ left:55pt; top:748pt; width:505pt; font:italic 10pt/12.6pt 'Carlito',sans-serif; color:#000; }

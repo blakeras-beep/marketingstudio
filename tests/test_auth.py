@@ -215,6 +215,18 @@ class SeedImportTest(unittest.TestCase):
         self.assertIn("plan Gone Plan (Fixture Park)", r["unmatched"])
         self.assertEqual(self.run_with(self.data)["fields"], 0)                      # idempotent
 
+    def test_better_read_replaces_untouched_import_only(self):
+        old = {**self.data, "communities": {"Fixture Park - Ph 2": {"standard_features": "# A\n- old read"}},
+               "dated": {"Fixture Park - Ph 2": {"standard_features": "2026-08-04"}}}
+        self.run_with(old)
+        self.assertEqual(inputs.last_changed("community", ["SUB1"], "standard_features"), "08/04/26")   # the sheet's date
+        new = {**old, "communities": {"Fixture Park - Ph 2": {"standard_features": "# A\n- better read"}}}
+        self.run_with(new)
+        self.assertEqual(inputs.load().get("community", "SUB1", "standard_features"), "# A\n- better read")
+        inputs.save("community", "SUB1", {"standard_features": "# A\n- marketing's text"}, 1)          # edited in the Studio
+        self.run_with({**new, "communities": {"Fixture Park - Ph 2": {"standard_features": "# A\n- newest"}}})
+        self.assertEqual(inputs.load().get("community", "SUB1", "standard_features"), "# A\n- marketing's text")
+
     def test_real_seed_file_is_valid(self):
         import json
         data = json.loads(self.seed.SEED.read_text(encoding="utf-8"))
