@@ -1,15 +1,24 @@
 {% extends "_shell.html" %}
-{% block title %}Edit {{ c.name }} · Sandlin Marketing Studio{% endblock %}
+{% block title %}{{ c.name }} settings · Sandlin Marketing Studio{% endblock %}
 {% block main %}
 <a href="/c/{{ c.slug }}" style="font-size:12px;color:var(--ink-subtle)">&larr; {{ c.name }}</a>
-<h1 style="margin-top:8px">Flyer inputs · {{ c.name }}</h1>
-<p class="sub">Facts the BDX feed and Blueprint don't carry. Prices, specs, photos and status still come from the feed and Blueprint and can't be edited here.
+<h1 style="margin-top:8px">Community settings · {{ c.name }}</h1>
+<p class="sub">The brand series, and the facts the BDX feed and Blueprint don't carry. Prices, specs, photos and status still come from the feed and Blueprint and can't be edited here.
 {% if last %}<br><span class="muted">Last change {{ last.updated_at[:16].replace('T', ' ') }} UTC{% if last.name %} by {{ last.name }}{% endif %}.</span>{% endif %}</p>
 
-<h2 id="community">Community facts</h2>
-<form method="post" action="/c/{{ c.slug }}/edit/community" class="form card">
+<h2 id="community">Community</h2>
+<form method="post" action="/c/{{ c.slug }}/settings/community" class="form card">
   {% for f in F.COMMUNITY_FIELDS %}
-  {% if f.kind in ('photo', 'photos') %}
+  {% if f.kind == 'series' %}
+  {% set cur = c.tier %}
+  <fieldset class="series"><legend>{{ f.label }}</legend>
+    {% for key, label in SERIES.items() %}
+    <label class="opt"><input type="radio" name="{{ f.key }}" value="{{ key }}" {{ 'checked' if key == cur }}>
+      <img src="/static/{{ 'logo-signature.png' if key == 'signature' else 'logo-navy.png' }}" alt="" style="height:26px"> {{ label }}</label>
+    {% endfor %}
+    {% if f.hint %}<small>{{ f.hint }}</small>{% endif %}
+  </fieldset>
+  {% elif f.kind in ('photo', 'photos') %}
   {% set chosen = vals.lines('community', cs, f.key) %}
   <fieldset class="picker"><legend>{{ f.label }}</legend>
     {% if f.hint %}<small>{{ f.hint }}</small>{% endif %}
@@ -35,7 +44,7 @@
 </form>
 
 <h2 id="plans">Plans</h2>
-<form method="post" action="/c/{{ c.slug }}/edit/plans">
+<form method="post" action="/c/{{ c.slug }}/settings/plans">
 {% for p in plans %}{% set ps = plan_subject(p) %}{% set pi = loop.index0 %}
 {% set elev = F.parse_elevations(vals.get('plan', ps, 'elevations')) %}
 {% set low = elev | map(attribute='price') | select | min if elev | map(attribute='price') | select | list else None %}

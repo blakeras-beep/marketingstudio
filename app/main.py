@@ -11,7 +11,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 
-from . import accounts, auth, bdx, blueprint, db, edit, homes_seen, images, inputs, store
+from . import accounts, assets, auth, bdx, blueprint, db, edit, homes_seen, images, inputs, series, store
 from .web import templates
 from .flyers import (
     COMMUNITY_FLYERS, ELEVATION_ROWS, FLYERS_BY_KEY, GRID_CARDS, HOME_FLYER, PLAN_FLYER, PLAN_ROWS,
@@ -32,6 +32,7 @@ PUBLIC_PATHS = {"/login", "/livez", "/healthz", "/healthz/images", "/favicon.ico
 @app.on_event("startup")
 def _startup() -> None:
     db.init()
+    series.refresh()
     if homes_seen.on_feed_load not in bdx.on_load:
         bdx.on_load.append(homes_seen.on_feed_load)
     note = auth.bootstrap_admin()
@@ -53,6 +54,7 @@ async def _auth_gate(request: Request, call_next):
 
 
 app.include_router(accounts.router)
+app.include_router(assets.router)
 app.include_router(edit.router)   # before /c/{slug}/{key} so "edit" isn't read as a flyer key
 
 
@@ -192,6 +194,9 @@ def repository(request: Request):
     st = bdx.state()
     return templates.TemplateResponse(request, "index.html", {
         "communities": st.communities, "feed": _feed_banner(st),
+        "assets": assets.listing(), "ASSET_CATEGORIES": assets.CATEGORIES, "ASSET_MAX_MB": assets.MAX_MB,
+        "assets_volatile": store.get_asset_store().name != "r2",
+        "msg": request.query_params.get("msg", ""), "err": request.query_params.get("err", ""),
     })
 
 

@@ -43,7 +43,9 @@ def _community_for(seed_name: str, communities: list) -> "bdx.Community | None":
     return pref[0] if pref else None
 
 
-def run(user_id: int) -> dict:
+def run(user_id: int, replace: bool = False) -> dict:
+    """Fill flyer inputs from the current flyers. replace=True also overwrites values already
+    in Studio with what the originals print (an admin's explicit choice on the Users page)."""
     data = json.loads(SEED.read_text(encoding="utf-8"))
     communities = bdx.state().communities
     vals = inputs.load()
@@ -71,10 +73,10 @@ def run(user_id: int) -> dict:
             if not new or not when.get(key):
                 continue
             stamp = when[key] + "T12:00:00+00:00"
-            if not vals.get(scope, subject, key) or untouched_import(scope, subject, key, stamp):
+            if replace or not vals.get(scope, subject, key) or untouched_import(scope, subject, key, stamp):
                 n += inputs.save(scope, subject, {key: new}, user_id, at=stamp)
             values = {k: v for k, v in values.items() if k != key}
-        empty = {k: v for k, v in values.items() if v and not vals.get(scope, subject, k)}
+        empty = {k: v for k, v in values.items() if v and (replace or not vals.get(scope, subject, k))}
         return n + (inputs.save(scope, subject, empty, user_id) if empty else 0)
 
     def as_text(v):

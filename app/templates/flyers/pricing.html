@@ -8,7 +8,7 @@
   <div class="a fx-head" style="left:36pt;top:28.8pt;width:534.5pt;height:135pt">
     <img class="cover bg" src="{{ img(hero, 7.5) or '/static/placeholder.svg' }}" alt="">
     <div class="wash"></div>
-    <img class="logo" src="/static/logo-navy.png" alt="Sandlin Homes" style="left:31.5pt;top:20.7pt;height:33pt">
+    <img class="logo" src="{{ logo(c, 'navy') }}" alt="{{ series_label(c) }}" style="left:31.5pt;top:20.7pt;height:33pt">
     <div class="ttl" style="left:31.5pt;top:62pt;font-size:36pt" data-autofit="22">{{ c.name }}</div>
     <div class="sub" style="left:31.5pt;top:104pt">Quick Move-In Homes&nbsp; | &nbsp;{{ city_line(c.city, c.state) }}</div>
   </div>

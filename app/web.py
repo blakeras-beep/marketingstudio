@@ -6,7 +6,7 @@ from pathlib import Path
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
 
-from . import auth, config, fmt, images
+from . import auth, config, fmt, images, series
 
 HERE = Path(__file__).parent
 
@@ -22,4 +22,5 @@ templates = Jinja2Templates(directory=HERE / "templates", context_processors=[_c
 templates.env.filters.update(fmt.FILTERS)
 templates.env.globals.update(img=images.src, DASH=fmt.DASH, READY=fmt.READY, DISCLAIMER=config.DISCLAIMER,
                              city_line=fmt.city_line, plan_label=fmt.plan_label,
-                             elevation_caption=fmt.elevation_caption)
+                             elevation_caption=fmt.elevation_caption,
+                             logo=series.logo, series_label=series.label)

@@ -77,11 +77,13 @@ Two tiers, never mixed in one piece:
 | Accent | slate-blue `#8B9EB7` | champagne `#E4CB84` |
 | "Ready Now" tag | lime `#E0F19C` ribbon | navy with champagne text (no ribbons) |
 
-A community is Signature when its BDX `<Builder><BrandName>` contains
-"Signature", or when it's named in `SIGNATURE_COMMUNITIES`. There is no reversed
-(white) Signature logo yet, so on navy it sits on a white plate; drop a
-`logo-signature-white.png` in `app/static/` and swap it in
-`templates/partials/logo.html` when one exists.
+A community's brand series is set on its **Community settings** page (admin and
+marketing director); without a setting it is Signature when its BDX
+`<Builder><BrandName>` contains "Signature", else Sandlin Homes. The import sets it
+from the logo on each community's current Standard Features sheet. Series, their
+logos (navy, white wide, white stacked) and labels live in `app/series.py`; a new
+series is an entry there, its logo files and a `body.tier-<key>` block in
+`print.css` (Signature turns the gray accents champagne).
 
 ## Data
 
@@ -133,9 +135,9 @@ python -m unittest                       # parser, format, image and R2 tests (R
 ```
 
 Settings (environment variables): `BDX_FEED_URL`, `BDX_CACHE_TTL` (default 900 s),
-`BDX_TIMEOUT` (20 s), `DISCLAIMER` (footer text), `SIGNATURE_COMMUNITIES`
-(comma-separated community names), `BLUEPRINT_URL` + `MARKETING_FEED_TOKEN`
-(the same token as on Blueprint), `BLUEPRINT_CACHE_TTL` (900 s).
+`BDX_TIMEOUT` (20 s), `DISCLAIMER` (footer text), `BLUEPRINT_URL` + `MARKETING_FEED_TOKEN`
+(the same token as on Blueprint), `BLUEPRINT_CACHE_TTL` (900 s), `MAX_ASSET_MB` (50, largest marketing-asset upload),
+`R2_ASSET_PREFIX` (`marketing-studio/assets/`, where uploaded assets are kept in the R2 bucket).
 
 Deploys anywhere that runs a Python web process. Railway: `railway.json` sets
 the start command and a `/livez` health check (independent of the feed, so a

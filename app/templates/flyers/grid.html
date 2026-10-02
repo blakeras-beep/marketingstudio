@@ -5,7 +5,7 @@
 {% for cards in pages %}
 <section class="sheet fg">
   <div class="a head"><img class="cover" src="{{ img(hero, 8.5) or '/static/placeholder.svg' }}" alt=""></div>
-  <img class="a" src="/static/brand/logo-white-stacked.png" alt="Sandlin Homes" style="left:22.4pt;top:27.9pt;width:140.2pt;height:99pt">
+  <img class="a" src="{{ logo(c, 'white-stacked') }}" alt="{{ series_label(c) }}" style="left:22.4pt;top:{{ '20pt' if c.tier == 'signature' else '27.9pt' }};width:140.2pt;height:{{ '114pt' if c.tier == 'signature' else '99pt' }};object-fit:contain">
   <div class="a t1" data-autofit="28">{{ c.name }}</div>
   <div class="a t2">{{ city_line(c.city, c.state) }}</div>
   <div class="a t3">Move-In Ready Homes</div>

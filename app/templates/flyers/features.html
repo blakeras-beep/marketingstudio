@@ -9,10 +9,9 @@
     <div class="wash"></div>
     {# long names wrap to two lines left of the logo, like the Rio Vista original; set on the bottom line #}
     <div class="ttl" style="left:34pt;top:14pt;width:300pt;height:84pt;padding-bottom:10pt;display:flex;align-items:flex-end;white-space:normal;font-size:44pt;line-height:.92;font-weight:500" data-autofit="26" data-autofit-h>{{ c.name }}</div>
-    <div class="a" style="left:35pt;top:113pt;width:150pt;height:1.5pt;background:#c9ced6"></div>
+    <div class="a" style="left:35pt;top:113pt;width:150pt;height:1.5pt;background:var(--rule,#c9ced6)"></div>
     <div class="sub" style="left:35pt;top:124pt;font:12.5pt/1 'Carlito',sans-serif">Standard Features</div>
-    {% if c.tier == "signature" %}<img class="logo" src="/static/logo-signature.png" alt="Sandlin Signature" style="left:340pt;top:40pt;width:255pt">
-    {% else %}<img class="logo" src="/static/logo-navy.png" alt="Sandlin Homes" style="left:340pt;top:42pt;width:255pt">{% endif %}
+    <img class="logo" src="{{ logo(c, 'navy') }}" alt="{{ series_label(c) }}" style="left:340pt;top:{{ '40pt' if c.tier == 'signature' else '42pt' }};width:255pt">
   </div>
   <div class="a col" data-ff-col style="left:31.4pt"></div>
   <div class="a col" data-ff-col style="left:327pt"></div>

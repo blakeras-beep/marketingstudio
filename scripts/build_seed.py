@@ -143,6 +143,18 @@ def community_info(pdf: Path) -> dict:
     return out
 
 
+def is_signature(pdf: Path) -> bool:
+    """A Standard Features sheet whose logo carries the gold "Signature" script (it sits under
+    SANDLIN, top right); the Sandlin Homes logo has none there."""
+    import io
+    from PIL import Image
+    page = pymupdf.open(pdf)[0]
+    im = Image.open(io.BytesIO(page.get_pixmap(dpi=100, clip=pymupdf.Rect(410, 90, 600, 135)).tobytes("png"))).convert("RGB")
+    px = list(im.get_flattened_data())
+    gold = sum(1 for r, g, b in px if r > 180 and 140 < g < 210 and b < 140 and r - b > 60 and r - g > 15)
+    return gold / len(px) > 0.005
+
+
 def is_community_info(pdf: Path) -> bool:
     try:
         return "Community Info" in pymupdf.open(pdf)[0].get_text()
@@ -338,6 +350,7 @@ def main() -> int:
             text = standard_features(pdf)
             if text.count("\n- ") >= 5:
                 com["standard_features"] = text
+                com["series"] = "signature" if is_signature(pdf) else "homes"
                 if sheet_date(pdf):
                     seed.setdefault("dated", {}).setdefault(name, {})["standard_features"] = sheet_date(pdf)
                 seed["sources"].append(str(pdf.relative_to(ROOT)))

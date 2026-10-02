@@ -3,6 +3,8 @@
    positions, sizes and colors are measured from the vector PDFs, so `left:20.3pt`
    below means the same spot as on the Canva/Excel original. */
 
+/* Sandlin Signature series: the gray accents turn champagne gold (as on the Signature originals) */
+body.tier-signature{ --gray:#e3cb83; --gray-x:#e3cb83; --rule:#e3cb83; }
 :root{
   --navy:#002147; --navy-info:#001d48; --slate:#8b9eb7; --gray:#babcbe; --gray-x:#b9b9b9;
   --stone:#ceb290; --row:#f2f2f2; --ink-x:#003b71; --price-x:#5b89b4; --red:#ff0000; --lime:#E0F19C; --gold:#E4CB84;

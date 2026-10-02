@@ -19,11 +19,13 @@ from .auth import now
 class Field:
     key: str
     label: str
-    kind: str = "text"   # text | lines | para | photo | photos | features | elevations
+    kind: str = "text"   # text | lines | para | photo | photos | features | elevations | series
     hint: str = ""
 
 
 COMMUNITY_FIELDS = [
+    Field("series", "Brand series", "series",
+          "Sets the logo and flyer design for every piece in this community."),
     Field("description", "Flyer description", "para",
           "Optional. Replaces the feed's community description on the Community Info sheet. "
           "One paragraph per line. Blank = use the feed's copy."),
@@ -112,6 +114,9 @@ def save(scope: str, subject: str, values: dict[str, str], user_id: int, at: str
             c.x("INSERT INTO input_history (scope, subject, field, value, updated_by, updated_at) "
                 "VALUES (?, ?, ?, ?, ?, ?)", (scope, subject, key, value or None, user_id, ts))
             changed += 1
+    if scope == "community" and "series" in values:
+        from . import series
+        series.refresh()
     return changed
 
 

@@ -20,7 +20,7 @@
 <section class="sheet fh">
   <div class="a hero" style="overflow:hidden"><img class="cover" src="{{ img(h.hero, 8.5) or '/static/placeholder.svg' }}" alt=""></div>
   <div class="a pennant"></div>
-  <img class="a" src="/static/brand/logo-white-wide.png" alt="Sandlin Homes" style="left:29.6pt;top:23.3pt;width:192.7pt;height:37.8pt">
+  <img class="a" src="{{ logo(c, 'white-wide') }}" alt="{{ series_label(c) }}" style="left:29.6pt;top:{{ '14pt' if c.tier == 'signature' else '23.3pt' }};width:192.7pt;height:{{ '56pt' if c.tier == 'signature' else '37.8pt' }};object-fit:contain;object-position:left center">
 
   <div class="a comm" style="top:236.3pt;font:700 52.2pt/63.2pt 'Cormorant Garamond',serif;white-space:nowrap" data-autofit="30">{{ c.name }}</div>
   <div class="a comm" style="top:289.4pt;font:19pt/26.6pt 'Poppins',sans-serif">{{ city_line(h.city or c.city, h.state or c.state) }}</div>

@@ -17,7 +17,8 @@
                    ((vals.get('community', cs, 'attractions_heading') or 'Attractions') | upper, vals.lines('community', cs, 'attractions'))] %}
 <section class="sheet fi">
   <div class="a band"></div>
-  <img class="a" src="/static/brand/logo-white-wide.png" alt="Sandlin Homes" style="left:21pt;top:17.6pt;width:205.5pt;height:40.5pt">
+  {% if c.tier == 'signature' %}<img class="a" src="{{ logo(c, 'white-wide') }}" alt="{{ series_label(c) }}" style="left:20pt;top:12pt;width:205pt;height:68pt;object-fit:contain;object-position:left center">
+  {% else %}<img class="a" src="{{ logo(c, 'white-wide') }}" alt="{{ series_label(c) }}" style="left:21pt;top:17.6pt;width:205.5pt;height:40.5pt">{% endif %}
   <div class="a name" data-autofit="28">{{ c.name }}</div>
   <div class="a subt">{{ city_line(c.city, c.state) }} | Community Info</div>
   <div class="a stripe" style="top:93pt"></div>

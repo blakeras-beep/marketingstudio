@@ -9,11 +9,6 @@ BDX_FEED_URL = os.environ.get(
 BDX_CACHE_TTL = int(os.environ.get("BDX_CACHE_TTL", "900"))
 BDX_TIMEOUT = float(os.environ.get("BDX_TIMEOUT", "20"))
 
-# Communities sold under the Sandlin Signature tier (comma-separated names).
-# A community is also Signature when its BDX <Builder><BrandName> says so.
-SIGNATURE_COMMUNITIES = [
-    s.strip() for s in os.environ.get("SIGNATURE_COMMUNITIES", "").split(",") if s.strip()
-]
 
 # Plain editable copy, not a binding: it carries no feed facts.
 DISCLAIMER = os.environ.get(

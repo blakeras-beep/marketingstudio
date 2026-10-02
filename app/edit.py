@@ -1,10 +1,11 @@
-"""Marketing inputs editor (admin + marketing). CSMs never see these routes."""
+"""Community Settings (admin + marketing director): brand series and the flyer facts the feed
+and Blueprint don't carry. CSMs never see these routes."""
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from . import auth, bdx, blueprint, inputs
+from . import auth, bdx, blueprint, inputs, series
 from .flyers import sorted_plans
 from .web import templates
 
@@ -21,10 +22,15 @@ def _community(slug: str) -> bdx.Community:
 
 def _done(slug: str, section: str, n: int) -> RedirectResponse:
     msg = "No changes." if n == 0 else f"Saved {n} change{'s' if n != 1 else ''}."
-    return RedirectResponse(f"/c/{slug}/edit?msg={msg}#{section}", status_code=303)
+    return RedirectResponse(f"/c/{slug}/settings?msg={msg}#{section}", status_code=303)
 
 
-@router.get("/c/{slug}/edit", response_class=HTMLResponse)
+@router.get("/c/{slug}/edit")
+def old_edit_url(slug: str):
+    return RedirectResponse(f"/c/{slug}/settings", status_code=301)
+
+
+@router.get("/c/{slug}/settings", response_class=HTMLResponse)
 def edit_page(request: Request, slug: str, msg: str = ""):
     auth.require(request, *EDITORS)
     c = _community(slug)
@@ -35,11 +41,11 @@ def edit_page(request: Request, slug: str, msg: str = ""):
         "plans": sorted_plans(c),
         "plan_subject": lambda p: inputs.plan_subject(c, p.name or ""),
         "F": inputs, "last": inputs.last_edit("community", [cs]),
-        "bp": blueprint.current(),
+        "bp": blueprint.current(), "SERIES": series.SERIES,
     })
 
 
-@router.post("/c/{slug}/edit/community")
+@router.post("/c/{slug}/settings/community")
 async def save_community(request: Request, slug: str):
     if not auth.same_origin(request):
         raise HTTPException(403, "Cross-site form posts are not allowed")
@@ -48,7 +54,10 @@ async def save_community(request: Request, slug: str):
     form = await request.form()
     values = {}
     for f in inputs.COMMUNITY_FIELDS:
-        if f.kind in ("photo", "photos"):   # only photos that are in this community's feed
+        if f.kind == "series":
+            if f.key in form:   # only when the form carries the choice
+                values[f.key] = form.get(f.key) if form.get(f.key) in series.SERIES else series.DEFAULT
+        elif f.kind in ("photo", "photos"):   # only photos that are in this community's feed
             picked = [u for u in form.getlist(f.key) if u in c.photos]
             values[f.key] = "\n".join(picked[:1] if f.kind == "photo" else picked[:3])
         else:
@@ -57,7 +66,7 @@ async def save_community(request: Request, slug: str):
     return _done(c.slug, "community", n)
 
 
-@router.post("/c/{slug}/edit/plans")
+@router.post("/c/{slug}/settings/plans")
 async def save_plans(request: Request, slug: str):
     if not auth.same_origin(request):
         raise HTTPException(403, "Cross-site form posts are not allowed")

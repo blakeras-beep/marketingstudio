@@ -1,6 +1,42 @@
 {% extends "_shell.html" %}
 {% block main %}
-<h1>Community Collateral</h1>
+<h1 id="assets">Marketing Assets</h1>
+<p class="sub">Promotions, warranty information and sales collateral for every community.</p>
+{% if assets %}
+<div class="card assets">
+  {% for cat, items in assets | groupby('category') %}
+  <h3>{{ cat }}</h3>
+  <ul>
+    {% for a in items %}
+    <li>
+      <a class="t" href="/assets/{{ a.id }}/{{ a.filename | urlencode }}" target="_blank" rel="noopener">{{ a.title }}</a>
+      <span class="muted">{{ a.filename.rsplit('.', 1)[-1] | upper }} · {{ '%.1f' % (a.size / 1048576) if a.size >= 104858 else '%d' % (a.size / 1024) }} {{ 'MB' if a.size >= 104858 else 'KB' }} · {{ a.uploaded_at[:10] }}{% if a.uploader and can_edit %} · {{ a.uploader }}{% endif %}</span>
+      <span class="sp"></span>
+      <a class="btn" href="/assets/{{ a.id }}/{{ a.filename | urlencode }}?download=1">Download</a>
+      {% if can_edit %}<form method="post" action="/assets/{{ a.id }}/delete" onsubmit="return confirm('Remove {{ a.filename }} for everyone?')"><button class="btn">Remove</button></form>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty">No marketing assets yet.{% if can_edit %} Upload the first one below.{% endif %}</div>
+{% endif %}
+{% if can_edit %}
+<details class="card upload" {{ 'open' if not assets }}>
+  <summary>Upload an asset</summary>
+  <form method="post" action="/assets" enctype="multipart/form-data" class="form row">
+    <label>File<input type="file" name="file" required accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.mp4,.mov,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip"></label>
+    <label>Title<input name="title" maxlength="120" placeholder="e.g. Fall Rate Buydown Promo"></label>
+    <label>Category<select name="category">{% for c in ASSET_CATEGORIES %}<option>{{ c }}</option>{% endfor %}</select></label>
+    <button class="btn primary">Upload</button>
+  </form>
+  <small class="muted">PDF, images, video, Word, Excel, PowerPoint or ZIP, up to {{ ASSET_MAX_MB }} MB. Everyone signed in can view and download.
+  {% if assets_volatile %}<strong>R2 isn't configured on this server, so uploads are lost when it restarts.</strong>{% endif %}</small>
+</details>
+{% endif %}
+
+<h1 style="margin-top:40px">Community Collateral</h1>
 <p class="sub">Every flyer renders from the live BDX feed when you open it — prices, plans and inventory are always current.</p>
 {% if communities %}
 <input class="search" type="search" placeholder="Find a community" oninput="

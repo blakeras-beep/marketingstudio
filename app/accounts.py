@@ -139,12 +139,14 @@ async def reset_password(request: Request, user_id: int):
 
 
 @router.post("/admin/import-reference")
-def import_reference(request: Request):
+async def import_reference(request: Request):
     _check_post(request)
     me = auth.require(request, "admin")
-    r = seed.run(me["id"])
+    replace = (await request.form()).get("mode") == "replace"
+    r = seed.run(me["id"], replace=replace)
     msg = (f"Imported {r['fields']} values from the current flyers "
-           f"({r['communities']} communities, {r['plans']} plans, {r['homes']} homes). Existing values were kept.")
+           f"({r['communities']} communities, {r['plans']} plans, {r['homes']} homes). "
+           + ("Values already in Studio were replaced with the originals'." if replace else "Existing values were kept."))
     if r["unmatched"]:
         msg += f" Not in the feed: {', '.join(r['unmatched'][:12])}{'…' if len(r['unmatched']) > 12 else ''}."
     return _back("/admin/users", msg=msg)

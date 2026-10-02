@@ -23,7 +23,7 @@ from fastapi import HTTPException, Request
 from . import db
 
 ROLES = ("admin", "marketing", "csm")
-ROLE_LABELS = {"admin": "Admin", "marketing": "Marketing", "csm": "CSM"}
+ROLE_LABELS = {"admin": "Admin", "marketing": "Marketing Director", "csm": "CSM"}
 COOKIE = "ms_session"
 SESSION_DAYS = int(os.environ.get("SESSION_DAYS", "30"))
 MIN_PASSWORD = 10

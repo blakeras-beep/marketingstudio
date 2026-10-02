@@ -50,6 +50,19 @@ SCHEMA = [
         updated_by INTEGER,
         updated_at TEXT NOT NULL
     )""",
+    # General marketing assets (promos, warranty, sales collateral) uploaded on the home page.
+    # The file itself is in the asset store (R2) under `key`.
+    """CREATE TABLE IF NOT EXISTS assets (
+        id {serial} PRIMARY KEY,
+        title TEXT NOT NULL,
+        category TEXT NOT NULL,
+        filename TEXT NOT NULL,
+        content_type TEXT NOT NULL,
+        size INTEGER NOT NULL,
+        key TEXT NOT NULL,
+        uploaded_by INTEGER,
+        uploaded_at TEXT NOT NULL
+    )""",
     # Last copy of every home the BDX feed listed, so a SOLD home (Blueprint) stays on the flyers
     # after the website drops it, until it closes (see app/homes_seen.py).
     """CREATE TABLE IF NOT EXISTS homes_seen (

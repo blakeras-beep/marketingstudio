@@ -69,9 +69,9 @@ class AuthTest(unittest.TestCase):
         csm = self.make("csm@test.local", "csm")
         self.assertEqual(csm.get("/").status_code, 200)
         self.assertEqual(csm.get("/c/fixture-park").status_code, 200)
-        self.assertNotIn("Edit flyer inputs", csm.get("/c/fixture-park").text)
-        self.assertEqual(csm.get("/c/fixture-park/edit").status_code, 403)
-        self.assertEqual(csm.post("/c/fixture-park/edit/community", data={"lot_size": "x"}).status_code, 403)
+        self.assertNotIn("Community settings", csm.get("/c/fixture-park").text)
+        self.assertEqual(csm.get("/c/fixture-park/settings").status_code, 403)
+        self.assertEqual(csm.post("/c/fixture-park/settings/community", data={"lot_size": "x"}).status_code, 403)
         self.assertEqual(csm.post("/c/fixture-park/homes/1-test-way/edit", data={"features": "x"}).status_code, 403)
         self.assertNotIn("Edit bullets", csm.get("/c/fixture-park/homes/1-test-way").text)
         self.assertEqual(csm.get("/admin/users").status_code, 403)
@@ -79,15 +79,15 @@ class AuthTest(unittest.TestCase):
 
     def test_marketing_edits_inputs_but_not_users(self):
         mkt = self.make("mkt@test.local", "marketing")
-        self.assertIn("Edit flyer inputs", mkt.get("/c/fixture-park").text)
-        self.assertEqual(mkt.get("/c/fixture-park/edit").status_code, 200)
-        r = mkt.post("/c/fixture-park/edit/community",
+        self.assertIn("Community settings", mkt.get("/c/fixture-park").text)
+        self.assertEqual(mkt.get("/c/fixture-park/settings").status_code, 200)
+        r = mkt.post("/c/fixture-park/settings/community",
                      data={"lot_size": " Standard ", "utilities": "Water: City\n\n Gas: Atmos "}, follow_redirects=False)
         self.assertIn("Saved+2+changes", r.headers["location"].replace("%20", "+").replace(" ", "+"))
         vals = inputs.load()
         self.assertEqual(vals.get("community", "SUB1", "lot_size"), "Standard")
         self.assertEqual(vals.lines("community", "SUB1", "utilities"), ["Water: City", "Gas: Atmos"])
-        mkt.post("/c/fixture-park/edit/plans", data={"0.beds_range": "3 - 4"})
+        mkt.post("/c/fixture-park/settings/plans", data={"0.beds_range": "3 - 4"})
         self.assertEqual(inputs.load().get("plan", "SUB1|Alpha", "beds_range"), "3 - 4")
         # a home is edited from its own flyer, and the save lands back on it
         flyer = mkt.get("/c/fixture-park/homes/1-test-way").text
@@ -98,7 +98,7 @@ class AuthTest(unittest.TestCase):
         self.assertEqual(inputs.load().lines("home", "S1", "features"), ["Island", "Patio"])
         self.assertIn("Saved.", mkt.get(r.headers["location"]).text)
         self.assertNotIn("Hacked", mkt.get("/c/fixture-park/homes/1-test-way?msg=Hacked").text)   # only our own notes show
-        mkt.post("/c/fixture-park/edit/community", data={"lot_size": ""})   # blank clears
+        mkt.post("/c/fixture-park/settings/community", data={"lot_size": ""})   # blank clears
         self.assertIsNone(inputs.load().get("community", "SUB1", "lot_size"))
         self.assertEqual(mkt.get("/admin/users").status_code, 403)
 

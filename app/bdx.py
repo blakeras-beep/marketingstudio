@@ -115,11 +115,14 @@ class Community:
 
     @property
     def tier(self) -> str:
-        """'signature' (gold arch, navy + champagne only) or 'homes'."""
+        """The brand series ('homes', 'signature', ...): the community's Settings page, else
+        'signature' when the feed's BrandName says so, else 'homes'."""
+        saved = SERIES_OVERRIDES.get(self.number or self.slug)
+        if saved:
+            return saved
         if self.brand and "signature" in self.brand.lower():
             return "signature"
-        keys = {name_key(n) for n in config.SIGNATURE_COMMUNITIES}
-        return "signature" if name_key(self.name) in keys else "homes"
+        return "homes"
 
     # Derived facts — computed from feed values only.
     @property
@@ -555,6 +558,7 @@ class FeedState:
 
 
 _state = FeedState()
+SERIES_OVERRIDES: dict[str, str] = {}   # community subject -> series (app/series.py)
 _lock = threading.Lock()
 # Called with the fresh communities after every successful parse (main.py: keep SOLD homes).
 # A failing hook is logged and never costs the feed.

@@ -62,6 +62,12 @@ class MemoryStore:
             while self.size > self.cap and len(self._d) > 1:
                 self.size -= len(self._d.popitem(last=False)[1])
 
+    def delete(self, key: str) -> None:
+        with self._lock:
+            data = self._d.pop(key, None)
+            if data is not None:
+                self.size -= len(data)
+
     def public_url(self, key: str) -> str | None:
         return None
 
@@ -69,7 +75,8 @@ class MemoryStore:
 class R2Store:
     name = "r2"
 
-    def __init__(self, client=None):
+    def __init__(self, client=None, prefix: str | None = None):
+        self.prefix = R2_PREFIX if prefix is None else prefix
         if client is None:
             import boto3  # only needed when R2 is configured
             from botocore.config import Config
@@ -89,7 +96,7 @@ class R2Store:
         self._known: set[str] = set()  # keys confirmed to exist, saves a HEAD per request
 
     def _key(self, key: str) -> str:
-        return R2_PREFIX + key
+        return self.prefix + key
 
     def get(self, key: str) -> bytes | None:
         try:
@@ -111,12 +118,17 @@ class R2Store:
         self._known.add(key)
         return True
 
-    def put(self, key: str, data: bytes) -> None:
+    def put(self, key: str, data: bytes, content_type: str = "image/jpeg",
+            cache_control: str = "public, max-age=31536000, immutable") -> None:
         self.client.put_object(
-            Bucket=R2_BUCKET, Key=self._key(key), Body=data, ContentType="image/jpeg",
-            CacheControl="public, max-age=31536000, immutable",
+            Bucket=R2_BUCKET, Key=self._key(key), Body=data, ContentType=content_type,
+            CacheControl=cache_control,
         )
         self._known.add(key)
+
+    def delete(self, key: str) -> None:
+        self.client.delete_object(Bucket=R2_BUCKET, Key=self._key(key))
+        self._known.discard(key)
 
     def public_url(self, key: str) -> str | None:
         return f"{R2_PUBLIC_URL}/{self._key(key)}" if R2_PUBLIC_URL else None
@@ -145,3 +157,24 @@ def get_store():
             if _store is None:
                 _store = MemoryStore(MEMORY_MB * 1024 * 1024)
         return _store
+
+
+# ---------------------------------------------------------------- uploaded marketing assets
+# Unlike the photo cache these are originals: R2 under R2_ASSET_PREFIX. Without R2 they're kept in
+# memory, i.e. lost on restart, and the home page says so to the people who upload.
+R2_ASSET_PREFIX = _env("R2_ASSET_PREFIX", "marketing-studio/assets/")
+_assets = None
+
+
+def get_asset_store():
+    global _assets
+    with _lock:
+        if _assets is None:
+            if r2_configured():
+                try:
+                    _assets = R2Store(prefix=R2_ASSET_PREFIX)
+                except Exception:
+                    log.exception("R2 setup failed; uploaded assets kept in memory")
+            if _assets is None:
+                _assets = MemoryStore(1024 * 1024 * 1024)
+        return _assets
